@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación 360 · ESPAE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --plum-900:#2f2c35;
+    --plum-700:#572975;
+    --plum-500:#815c97;
+    --plum-300:#ab90b9;
+    --lilac-100:#d5c6dc;
+    --grey-200:#d0ccd5;
+    --white:#ffffff;
+    --radius:14px;
+    --shadow: 0 12px 32px -18px rgba(47,44,53,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    color:var(--plum-900);
+    background:
+      radial-gradient(circle at 8% 0%, var(--lilac-100) 0%, rgba(213,198,220,0) 42%),
+      radial-gradient(circle at 100% 12%, var(--grey-200) 0%, rgba(208,204,213,0) 38%),
+      var(--white);
+    min-height:100vh;
+    line-height:1.5;
+  }
+  .app{max-width:760px;margin:0 auto;padding:32px 20px 80px;}
+  .brand{display:flex;align-items:center;gap:13px;margin-bottom:38px;cursor:pointer;user-select:none;}
+  .brand .mark{
+    width:44px;height:44px;border-radius:12px;
+    background:linear-gradient(155deg,var(--plum-700),var(--plum-500));
+    display:flex;align-items:center;justify-content:center;
+    color:var(--white);font-family:'Fraunces',serif;font-weight:600;font-size:19px;
+    line-height:1;flex-shrink:0;
+  }
+  .brand .txt{display:flex;flex-direction:column;justify-content:center;line-height:1.3;}
+  .brand .eyebrow{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--plum-500);font-weight:400;}
+  .brand .eyebrow-strong{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--plum-700);font-weight:700;margin-top:1px;}
+  .brand .title{font-family:'Fraunces',serif;font-size:15.5px;font-weight:500;color:var(--plum-900);margin-top:3px;}
+
+  .view{display:none;animation:rise .45s ease both;}
+  .view.active{display:block;}
+  @keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  h1.hero{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(30px,5vw,42px);letter-spacing:-.01em;margin:0 0 10px;color:var(--plum-900);}
+  p.lede{color:var(--plum-700);font-size:16px;max-width:52ch;margin:0 0 14px;}
+  p.tagline{font-family:'Fraunces',serif;font-weight:500;font-size:20px;color:var(--plum-700);max-width:44ch;margin:0 0 18px;letter-spacing:-.005em;}
+  p.welcome-line{font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--plum-500);font-weight:700;margin:0 0 36px;}
+
+  .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:560px){.choice-grid{grid-template-columns:1fr;}}
+  .choice-grid-secondary{max-width:calc(50% - 8px);margin:16px auto 0;}
+  @media (max-width:560px){.choice-grid-secondary{max-width:100%;}}
+  .choice-card{
+    text-align:left;border:1px solid var(--grey-200);background:var(--white);
+    border-radius:var(--radius);padding:26px 22px;cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    font-family:inherit;
+  }
+  .choice-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--plum-300);}
+  .choice-card:focus-visible{outline:2px solid var(--plum-700);outline-offset:3px;}
+  .choice-card .num{font-family:'Fraunces',serif;font-size:13px;color:var(--plum-300);letter-spacing:.08em;}
+  .choice-card h3{font-family:'Fraunces',serif;font-weight:500;font-size:20px;margin:10px 0 8px;}
+  .choice-card p{margin:0;font-size:13.5px;color:#6d6577;}
+
+  .admin-link{margin-top:52px;text-align:center;}
+  .admin-link button{background:none;border:none;color:var(--plum-300);font-size:12px;cursor:pointer;letter-spacing:.03em;}
+  .admin-link button:hover{color:var(--plum-700);}
+
+  .card{background:var(--white);border:1px solid var(--grey-200);border-radius:var(--radius);padding:28px 26px;box-shadow:var(--shadow);}
+  .back-row{display:flex;align-items:center;gap:8px;margin-bottom:22px;}
+  .back-btn{background:none;border:none;color:var(--plum-500);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:4px 0;}
+  .back-btn:hover{color:var(--plum-700);}
+
+  label{display:block;font-size:13px;font-weight:600;color:var(--plum-700);margin:0 0 6px;}
+  .field{margin-bottom:18px;}
+  select, input[type=text], input[type=password], input[type=tel], textarea{
+    width:100%;border:1.5px solid var(--grey-200);border-radius:10px;padding:12px 14px;
+    font-family:inherit;font-size:15px;color:var(--plum-900);background:var(--white);
+    transition:border-color .15s ease;
+  }
+  select:focus, input:focus, textarea:focus{outline:none;border-color:var(--plum-700);}
+  textarea{resize:vertical;min-height:96px;}
+  .hint{font-size:12px;color:#8a8391;margin-top:5px;}
+  .error-msg{background:#fbeeee;border:1px solid #e3b8b8;color:#8f3a3a;font-size:13.5px;padding:10px 13px;border-radius:9px;margin-top:14px;}
+
+  .btn{
+    appearance:none;border:none;border-radius:10px;padding:13px 24px;font-size:15px;font-weight:600;
+    font-family:inherit;cursor:pointer;transition:filter .15s ease, transform .1s ease;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--plum-700);color:var(--white);}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-secondary{background:var(--lilac-100);color:var(--plum-700);}
+  .btn-secondary:hover{filter:brightness(.97);}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:.5;cursor:not-allowed;}
+
+  .section-block{margin-bottom:34px;}
+  .section-block .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--plum-500);font-weight:700;margin-bottom:4px;}
+  .section-block h2{font-family:'Fraunces',serif;font-weight:500;font-size:23px;margin:0 0 6px;}
+  .section-block .desc{font-size:14px;color:#6d6577;margin:0 0 20px;}
+
+  .likert-item{padding:16px 0;border-top:1px solid var(--grey-200);}
+  .likert-item:first-of-type{border-top:none;}
+
+  .competency-block{border-left:3px solid var(--plum-300);padding-left:18px;margin:26px 0;}
+  .competency-block:first-of-type{margin-top:8px;}
+  .competency-block h3{
+    font-family:'Fraunces',serif;font-weight:500;font-size:19.5px;color:var(--plum-700);
+    margin:0 0 2px;letter-spacing:-.005em;
+  }
+  .likert-q{font-size:14.5px;color:var(--plum-900);margin-bottom:12px;}
+  .likert-scale{display:flex;gap:8px;flex-wrap:wrap;}
+  .likert-opt{flex:1;min-width:72px;}
+  .likert-opt input{position:absolute;opacity:0;width:0;height:0;}
+  .likert-opt label{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    text-align:center;border:1.5px solid var(--grey-200);border-radius:9px;
+    padding:10px 4px;color:#6d6577;cursor:pointer;margin:0;min-height:52px;
+    transition:all .15s ease;
+  }
+  .likert-num{font-size:16px;font-weight:700;line-height:1;}
+  .likert-sub{font-size:9px;font-weight:500;line-height:1.15;}
+  .likert-text{font-size:10px;font-weight:500;line-height:1.2;}
+  .likert-opt.likert-na{flex:1.4;min-width:100px;}
+  .likert-opt.likert-na label{border-style:dashed;}
+  .likert-opt input:checked + label{background:var(--plum-700);border-color:var(--plum-700);color:var(--white);}
+  .likert-opt label:hover{border-color:var(--plum-500);}
+
+  .instructions-box{
+    background:var(--lilac-100);border-left:4px solid var(--plum-700);border-radius:10px;
+    padding:16px 18px;font-size:13.5px;color:var(--plum-900);margin-bottom:28px;line-height:1.55;
+  }
+
+  .consent-text{
+    max-height:360px;overflow-y:auto;border:1px solid var(--grey-200);border-radius:12px;
+    padding:18px 20px;font-size:13.5px;line-height:1.6;color:var(--plum-900);background:#faf9fb;
+  }
+  .consent-text p{margin:0 0 12px;}
+  .consent-text p:last-child{margin-bottom:0;}
+  .consent-text strong{color:var(--plum-700);}
+  .consent-text a{color:var(--plum-700);}
+
+  /* Track / progress dashboard */
+  .track-hero{
+    background:linear-gradient(135deg,var(--plum-700),var(--plum-500));
+    color:var(--white);border:none;
+  }
+  .track-hero .muted{color:rgba(255,255,255,.75);}
+  .track-hero h1{color:var(--white);}
+  .track-hero .lede{color:rgba(255,255,255,.92);}
+
+  .track-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:18px;}
+  .track-stat{padding:20px 20px;}
+  .track-stat-label{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--plum-500);font-weight:700;margin-bottom:10px;}
+  .track-stat-number{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--plum-900);}
+  .track-stat-date{font-size:14.5px;color:var(--plum-900);font-weight:600;}
+
+  .status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;}
+  .status-pill.status-done{background:#e4f2e6;color:#2f7a3f;}
+  .status-pill.status-pending{background:var(--lilac-100);color:var(--plum-700);}
+
+  .env-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px;}
+  @media (max-width:560px){.env-grid{grid-template-columns:1fr;}}
+  .env-card{border:1px solid var(--grey-200);border-radius:12px;padding:18px 20px;}
+  .env-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--plum-900);margin-bottom:10px;}
+  .env-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .env-count{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--plum-700);line-height:1;}
+  .env-sub{font-size:12.5px;color:#8a8391;margin-top:4px;}
+
+  .donut-row{display:flex;align-items:center;gap:32px;flex-wrap:wrap;}
+  .donut{
+    width:150px;height:150px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(47,44,53,.05);
+  }
+  .donut-hole{
+    width:96px;height:96px;border-radius:50%;background:var(--white);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:var(--shadow);
+  }
+  .donut-number{font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:var(--plum-900);line-height:1;}
+  .donut-caption{font-size:10.5px;color:#8a8391;margin-top:3px;}
+
+  .legend-list{flex:1;min-width:220px;display:flex;flex-direction:column;gap:10px;}
+  .legend-row{display:flex;align-items:center;gap:10px;}
+  .legend-row-empty{opacity:.45;}
+  .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .legend-label{font-size:12px;color:var(--plum-900);width:128px;flex-shrink:0;line-height:1.25;}
+  .legend-bar-track{flex:1;height:7px;background:var(--grey-200);border-radius:5px;overflow:hidden;}
+  .legend-bar-fill{height:100%;border-radius:5px;transition:width .4s ease;}
+  .legend-count{font-size:12.5px;font-weight:700;color:var(--plum-900);width:16px;text-align:right;flex-shrink:0;}
+
+  .app-footer{
+    margin-top:64px;padding-top:20px;border-top:1px solid var(--grey-200);
+    display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;
+  }
+  .app-footer-version{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--plum-500);}
+  .app-footer-copy{font-size:11px;color:#8a8391;}
+
+  .confirm-wrap{text-align:center;padding:60px 20px;}
+  .confirm-icon{
+    width:64px;height:64px;border-radius:50%;background:var(--plum-700);color:var(--white);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 22px;font-size:28px;
+  }
+  .confirm-wrap h2{font-family:'Fraunces',serif;font-weight:500;font-size:26px;margin:0 0 10px;}
+  .confirm-wrap p{color:#6d6577;font-size:15px;max-width:40ch;margin:0 auto 28px;}
+
+  table.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px;}
+  table.admin-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--plum-500);padding:8px 10px;border-bottom:1.5px solid var(--grey-200);}
+  table.admin-table td{padding:9px 10px;border-bottom:1px solid var(--grey-200);}
+  table.admin-table tr:last-child td{border-bottom:none;}
+  .pin-tag{font-family:monospace;background:var(--lilac-100);color:var(--plum-700);padding:2px 8px;border-radius:6px;font-size:12.5px;}
+  .row-btn{background:none;border:none;color:#b05252;cursor:pointer;font-size:12px;}
+  .stat-badges{display:flex;gap:6px;flex-wrap:wrap;}
+  .badge{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--grey-200);color:var(--plum-900);}
+  .badge.on{background:var(--plum-700);color:var(--white);}
+
+  .admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;}
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--plum-900);color:var(--white);padding:11px 20px;border-radius:10px;
+    font-size:13.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+  .inline-form{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .inline-form input{flex:1;min-width:160px;}
+
+  .subtle-divider{height:1px;background:var(--grey-200);margin:26px 0;}
+  .muted{color:#8a8391;font-size:13px;}
+  .status-banner{background:#fbeeee;border:1px solid #e3b8b8;color:#8f3a3a;font-size:13px;padding:12px 16px;border-radius:10px;margin-bottom:22px;white-space:pre-wrap;word-break:break-word;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="brand" onclick="goHome()">
+    <div class="mark">E</div>
+    <div class="txt">
+      <span class="eyebrow">Diplomado Internacional Desarrollo de Habilidades para Mujeres Directivas</span>
+      <span class="eyebrow-strong">ESPAE, Escuela de Negocios de la ESPOL</span>
+      <span class="title">SheLeads360 · Women Cross Mentoring</span>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div class="view active" id="view-home">
+    <div id="home-status"></div>
+    <h1 class="hero">Un espejo completo de tu liderazgo.</h1>
+    <p class="lede">Esta evaluación combina tu propia mirada con la de las personas de tu entorno personal y profesional.</p>
+    <p class="tagline">Conócete mejor. Inspira, lidera y transforma.</p>
+    <p class="welcome-line">Bienvenida a tu Evaluación 360°</p>
+    <div class="choice-grid">
+      <button class="choice-card" onclick="startSelf()">
+        <div class="num">01</div>
+        <h3>Autoevaluación</h3>
+        <p>Eres participante del diplomado y vas a evaluarte a ti misma.</p>
+      </button>
+      <button class="choice-card" onclick="startPeer()">
+        <div class="num">02</div>
+        <h3>Evaluación de pares</h3>
+        <p>Vas a evaluar a una participante desde tu entorno personal o profesional.</p>
+      </button>
+    </div>
+    <div class="choice-grid" style="margin-top:16px;">
+      <button class="choice-card" onclick="startTrack()">
+        <div class="num">03</div>
+        <h3>Mi progreso</h3>
+        <p>Eres participante y quieres ver cómo va tu proceso de Evaluación 360.</p>
+      </button>
+      <button class="choice-card" onclick="startReportView()">
+        <div class="num">04</div>
+        <h3>Mi informe</h3>
+        <p>Eres participante y quieres ver tu informe personalizado de Evaluación 360.</p>
+      </button>
+    </div>
+    <div class="admin-link"><button onclick="goAdminLogin()">Acceso administrador</button></div>
+  </div>
+
+  <!-- SELF AUTH -->
+  <div class="view" id="view-self-auth">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:22px;">
+        <div class="eyebrow">Autoevaluación</div>
+        <h2>Confirma tu identidad</h2>
+        <p class="desc">Selecciona tu nombre e ingresa tu PIN de validación para continuar.</p>
+      </div>
+      <div class="field">
+        <label for="self-name">Nombre de la participante</label>
+        <select id="self-name"><option value="">Selecciona tu nombre…</option></select>
+      </div>
+      <div class="field">
+        <label for="self-pin">PIN de validación</label>
+        <input type="tel" id="self-pin" maxlength="6" placeholder="••••">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="validateSelf()">Continuar</button>
+      <div id="self-auth-error"></div>
+    </div>
+  </div>
+
+  <!-- SELF FORM -->
+  <div class="view" id="view-self-form">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Salir</button></div>
+    <div class="card">
+      <p class="muted" style="margin-top:0;">Autoevaluación de <strong id="self-form-name"></strong></p>
+      <form id="self-form-el" onsubmit="submitSelf(event)"></form>
+    </div>
+  </div>
+
+  <!-- SELF DONE -->
+  <div class="view" id="view-self-done">
+    <div class="card confirm-wrap">
+      <div class="confirm-icon">✓</div>
+      <h2>¡Autoevaluación registrada!</h2>
+      <p>Gracias por completar tu autoevaluación. Tus respuestas ya forman parte de tu informe de Evaluación 360.</p>
+      <button class="btn btn-secondary" onclick="goHome()">Volver al inicio</button>
+    </div>
+  </div>
+
+  <!-- PEER AUTH -->
+  <div class="view" id="view-peer-auth">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:22px;">
+        <div class="eyebrow">Evaluación de pares</div>
+        <h2>¿A quién vas a evaluar?</h2>
+        <p class="desc">Selecciona a la participante y confirma con su PIN de validación.</p>
+      </div>
+      <div class="field">
+        <label for="peer-name">Nombre de la participante</label>
+        <select id="peer-name"><option value="">Selecciona el nombre…</option></select>
+      </div>
+      <div class="field">
+        <label for="peer-pin">PIN de validación de la participante</label>
+        <input type="tel" id="peer-pin" maxlength="6" placeholder="••••">
+      </div>
+      <div class="subtle-divider"></div>
+      <div class="field">
+        <label for="peer-rel-type">Tu entorno con la participante</label>
+        <select id="peer-rel-type" onchange="updateRelDetail()">
+          <option value="">Selecciona…</option>
+          <option value="Personal">Entorno personal</option>
+          <option value="Profesional">Entorno profesional</option>
+        </select>
+      </div>
+      <div class="field" id="peer-rel-detail-wrap" style="display:none;">
+        <label for="peer-rel-detail">Relación específica</label>
+        <select id="peer-rel-detail"></select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="validatePeer()">Continuar</button>
+      <div id="peer-auth-error"></div>
+    </div>
+  </div>
+
+  <!-- PEER FORM -->
+  <div class="view" id="view-peer-form">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Salir</button></div>
+    <div class="card">
+      <p class="muted" style="margin-top:0;">Evaluación de pares para <strong id="peer-form-name"></strong></p>
+      <form id="peer-form-el" onsubmit="submitPeer(event)"></form>
+    </div>
+  </div>
+
+  <!-- PEER DONE -->
+  <div class="view" id="view-peer-done">
+    <div class="card confirm-wrap">
+      <div class="confirm-icon">✓</div>
+      <h2>¡Evaluación enviada!</h2>
+      <p>Gracias por tu tiempo. Tu evaluación fue registrada y contribuirá al informe de Evaluación 360 de la participante.</p>
+      <button class="btn btn-secondary" onclick="goHome()">Volver al inicio</button>
+    </div>
+  </div>
+
+  <!-- CONSENT -->
+  <div class="view" id="view-consent">
+    <div class="back-row"><button class="back-btn" onclick="declineConsent()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:18px;">
+        <div class="eyebrow">Antes de continuar</div>
+        <h2>Consentimiento informado</h2>
+      </div>
+      <div class="consent-text">
+        <p><strong>Declaración de Consentimiento Informado</strong></p>
+        <p>He sido invitada(o) a participar en "Women Cross Mentoring", parte del Diplomado Internacional Desarrollo de Habilidades para Mujeres Directivas, organizado por ESPAE - Escuela de Negocios de la ESPOL, y la Universidad de La Sabana.</p>
+        <p>Entiendo que esta Evaluación 360° tiene como objetivo brindar una perspectiva objetiva sobre el comportamiento, las competencias y el profesionalismo de la participante evaluada, como insumo para su plan estratégico de desarrollo personal.</p>
+        <p>Mi participación es voluntaria, ya sea como autoevaluación o como evaluación de pares.</p>
+        <p>La información recopilada será confidencial y solo será utilizada por los responsables del proceso, con fines de retroalimentación y desarrollo personal y profesional. Acepto que los resultados se usen para generar informes y recomendaciones de desarrollo orientados a apoyar el crecimiento de la participante evaluada.</p>
+        <p>Sé que puedo retirarme en cualquier momento, sin consecuencias negativas.</p>
+        <p>Al aceptar esta declaración, confirmo que he leído y comprendido las condiciones descritas, y doy mi consentimiento voluntario para participar en este proceso de Evaluación 360°.</p>
+        <p><strong>Política de Protección de Datos Personales</strong></p>
+        <p>ESPAE, la Escuela de Negocios de la ESPOL, en cumplimiento de la Ley Orgánica de Protección de Datos Personales, informa que los datos ingresados en este formulario serán almacenados conforme a sus políticas de privacidad. Al continuar, usted autoriza a la Escuela el uso y tratamiento de sus datos personales para los fines allí establecidos.</p>
+        <p>Consulte nuestra política completa: <a href="https://www.espae.edu.ec/politica-datos-personales" target="_blank" rel="noopener">www.espae.edu.ec/politica-datos-personales</a></p>
+      </div>
+      <div class="admin-actions" style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="acceptConsent()">Acepto y continúo</button>
+        <button class="btn btn-secondary" onclick="declineConsent()">No acepto, volver al inicio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACK AUTH -->
+  <div class="view" id="view-track-auth">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:22px;">
+        <div class="eyebrow">Mi progreso</div>
+        <h2>Consulta tu avance</h2>
+        <p class="desc">Selecciona tu nombre e ingresa tu PIN de validación para ver el estado de tu Evaluación 360.</p>
+      </div>
+      <div class="field">
+        <label for="track-name">Nombre de la participante</label>
+        <select id="track-name"><option value="">Selecciona tu nombre…</option></select>
+      </div>
+      <div class="field">
+        <label for="track-pin">PIN de validación</label>
+        <input type="tel" id="track-pin" maxlength="6" placeholder="••••">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="validateTrack()">Ver mi progreso</button>
+      <div id="track-auth-error"></div>
+    </div>
+  </div>
+
+  <!-- TRACK DASHBOARD -->
+  <div class="view" id="view-track-dashboard">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Salir</button></div>
+    <div id="track-dashboard-content"></div>
+  </div>
+
+  <!-- REPORT AUTH -->
+  <div class="view" id="view-report-auth">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:22px;">
+        <div class="eyebrow">Mi informe</div>
+        <h2>Consulta tu informe personalizado</h2>
+        <p class="desc">Selecciona tu nombre e ingresa tu PIN de validación para ver tu informe de Evaluación 360.</p>
+      </div>
+      <div class="field">
+        <label for="report-name">Nombre de la participante</label>
+        <select id="report-name"><option value="">Selecciona tu nombre…</option></select>
+      </div>
+      <div class="field">
+        <label for="report-pin">PIN de validación</label>
+        <input type="tel" id="report-pin" maxlength="6" placeholder="••••">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="validateReportAccess()">Ver mi informe</button>
+      <div id="report-auth-error"></div>
+    </div>
+  </div>
+
+  <!-- REPORT VIEW -->
+  <div class="view" id="view-report-view">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Salir</button></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--grey-200);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <p class="muted" style="margin:0;">Informe de <strong id="report-view-name"></strong></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="downloadOwnPdf()">⇩ Descargar PDF</button>
+          <button class="btn btn-secondary" onclick="downloadOwnHtml()">⇩ Descargar HTML</button>
+        </div>
+      </div>
+      <iframe id="report-view-iframe" style="width:100%;border:none;min-height:75vh;display:block;" title="Informe individual de Evaluación 360"></iframe>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div class="view" id="view-admin-login">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Volver</button></div>
+    <div class="card">
+      <div class="section-block" style="margin-bottom:22px;">
+        <div class="eyebrow">Administrador</div>
+        <h2>Panel de administración</h2>
+        <p class="desc">Ingresa la clave de administrador del programa.</p>
+      </div>
+      <div class="field">
+        <label for="admin-pass">Clave</label>
+        <input type="password" id="admin-pass">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="checkAdminPass()">Entrar</button>
+      <div id="admin-login-error"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="view" id="view-admin">
+    <div class="back-row"><button class="back-btn" onclick="goHome()">← Salir</button></div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="section-block" style="margin-bottom:14px;">
+        <div class="eyebrow">Administrador</div>
+        <h2>Participantes</h2>
+        <p class="desc">Agrega participantes y comparte el PIN generado con cada una y con quienes la van a evaluar.</p>
+      </div>
+      <div class="inline-form">
+        <input type="text" id="new-participant-name" placeholder="Nombre completo de la participante">
+        <button class="btn btn-primary" onclick="addParticipant()">Agregar</button>
+      </div>
+      <table class="admin-table" id="admin-participant-table">
+        <thead><tr><th>Nombre</th><th>PIN</th><th>Autoeval.</th><th>Pares</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-block" style="margin-bottom:10px;">
+        <div class="eyebrow">Datos y reportes</div>
+        <h2>Exportar resultados</h2>
+        <p class="desc">Descarga todos los datos crudos en Excel, o genera el informe consolidado de una participante en PDF o en HTML.</p>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-secondary" onclick="exportExcel()">⇩ Descargar Excel (todos los datos)</button>
+        <button class="btn btn-secondary" onclick="exportCompetencyScores()">⇩ Descargar puntuaciones promedio por competencia</button>
+      </div>
+      <div class="subtle-divider"></div>
+      <div class="field">
+        <label for="report-participant">Generar informe para</label>
+        <select id="report-participant"></select>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-primary" onclick="generatePdf()">⇩ Descargar informe PDF</button>
+        <button class="btn btn-secondary" onclick="generateHtmlReport()">🔍 Ver informe (HTML, para imprimir)</button>
+        <button class="btn btn-secondary" onclick="downloadHtmlReport()">⇩ Descargar informe HTML</button>
+      </div>
+      <a id="pdf-fallback-link" class="btn btn-secondary" style="display:none;margin-top:10px;" target="_blank" rel="noopener">Abrir informe PDF</a>
+      <a id="html-report-fallback-link" class="btn btn-secondary" style="display:none;margin-top:10px;" target="_blank" rel="noopener">Abrir informe HTML</a>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <span class="app-footer-version">SheLeads360 · Women Cross Mentoring — v1.0</span>
+    <span class="app-footer-copy">© 2026 ESPAE, Escuela de Negocios de la ESPOL. Todos los derechos reservados.</span>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- Data model helpers ---------------- */
+const ADMIN_PASSWORD = "Coello1994";
+
+const COMPETENCIES = [
+  { key:"autoconocimiento", label:"Autoconocimiento" },
+  { key:"liderazgo", label:"Liderazgo inclusivo y colaborativo" },
+  { key:"adaptabilidad", label:"Adaptabilidad y resiliencia" },
+  { key:"marca", label:"Marca personal" },
+  { key:"decision", label:"Toma de decisiones" },
+  { key:"emocional", label:"Inteligencia emocional" },
+  { key:"estrategico", label:"Conocimiento estratégico" }
+];
+
+const ITEMS_SELF = {
+  autoconocimiento:[
+    "Reconozco con claridad mis principales fortalezas y las áreas en las que necesito mejorar.",
+    "Identifico con facilidad las emociones que estoy sintiendo en cada momento.",
+    "Busco activamente la retroalimentación de otras personas para conocerme mejor."
+  ],
+  liderazgo:[
+    "Genero un ambiente de confianza donde mi equipo se siente seguro de expresar sus ideas y admitir errores sin temor.",
+    "Impulso la participación de personas con perspectivas, géneros y orígenes diversos en la toma de decisiones.",
+    "Identifico el talento de otras personas en la organización y apoyo activamente su desarrollo profesional."
+  ],
+  adaptabilidad:[
+    "Mantengo mi enfoque y desempeño cuando surgen cambios repentinos o nuevas prioridades.",
+    "Me recupero rápidamente de los contratiempos y los convierto en aprendizajes.",
+    "Muestro curiosidad por aprender nuevas herramientas, como la inteligencia artificial, y las aplico en mi trabajo."
+  ],
+  marca:[
+    "Tengo claridad sobre la imagen que proyecto a las demás personas.",
+    "Cuido conscientemente mi imagen para que refleje mis valores.",
+    "Comunico con claridad mis habilidades y mi experiencia en el área en la que trabajo."
+  ],
+  decision:[
+    "Considero variables como el tiempo, los recursos y las restricciones antes de tomar una decisión.",
+    "Asumo riesgos calculados y cuyo resultado puedo medir.",
+    "Evalúo distintas alternativas antes de decidir cuál es la mejor opción."
+  ],
+  emocional:[
+    "Comprendo las motivaciones y dificultades de los demás, y adapto mi forma de comunicarme para conectar mejor con ellos.",
+    "Manejo las tensiones de forma constructiva, enfocándome en resolver el problema más que en el conflicto personal.",
+    "Mantengo la calma y controlo mis reacciones emocionales en situaciones de presión o estrés."
+  ],
+  estrategico:[
+    "Comprendo las necesidades de los clientes internos y externos, y actúo para fortalecer esa relación.",
+    "Comprendo cómo las decisiones de mi área impactan en la estrategia y los objetivos generales de la organización.",
+    "Identifico oportunidades de mejora continua en los productos y servicios de la organización."
+  ]
+};
+
+const ITEMS_PEER = {
+  autoconocimiento:[
+    "Reconoce con claridad sus principales fortalezas y las áreas en las que necesita mejorar.",
+    "Identifica con facilidad las emociones que está sintiendo en cada momento.",
+    "Busca activamente la retroalimentación de otras personas para conocerse mejor."
+  ],
+  liderazgo:[
+    "Genera un ambiente de confianza donde su equipo se siente seguro de expresar sus ideas y admitir errores sin temor.",
+    "Impulsa la participación de personas con perspectivas, géneros y orígenes diversos en la toma de decisiones.",
+    "Identifica el talento de otras personas en la organización y apoya activamente su desarrollo profesional."
+  ],
+  adaptabilidad:[
+    "Mantiene su enfoque y desempeño cuando surgen cambios repentinos o nuevas prioridades.",
+    "Se recupera rápidamente de los contratiempos y los convierte en aprendizajes.",
+    "Muestra curiosidad por aprender nuevas herramientas, como la inteligencia artificial, y las aplica en su trabajo."
+  ],
+  marca:[
+    "Tiene claridad sobre la imagen que proyecta a las demás personas.",
+    "Cuida conscientemente su imagen para que refleje sus valores.",
+    "Comunica con claridad sus habilidades y su experiencia en el área en la que trabaja."
+  ],
+  decision:[
+    "Considera variables como el tiempo, los recursos y las restricciones antes de tomar una decisión.",
+    "Asume riesgos calculados y cuyo resultado puede medir.",
+    "Evalúa distintas alternativas antes de decidir cuál es la mejor opción."
+  ],
+  emocional:[
+    "Comprende las motivaciones y dificultades de los demás, y adapta su forma de comunicarse para conectar mejor con ellos.",
+    "Maneja las tensiones de forma constructiva, enfocándose en resolver el problema más que en el conflicto personal.",
+    "Mantiene la calma y controla sus reacciones emocionales en situaciones de presión o estrés."
+  ],
+  estrategico:[
+    "Comprende las necesidades de los clientes internos y externos, y actúa para fortalecer esa relación.",
+    "Comprende cómo las decisiones de su área impactan en la estrategia y los objetivos generales de la organización.",
+    "Identifica oportunidades de mejora continua en los productos y servicios de la organización."
+  ]
+};
+
+const LIKERT = [
+  {v:'1', num:'1', sub:'En poca medida'},
+  {v:'2', num:'2'},
+  {v:'3', num:'3'},
+  {v:'4', num:'4'},
+  {v:'5', num:'5', sub:'En gran medida'},
+  {v:'na', text:'Comportamiento no observado'}
+];
+
+const SELF_INSTRUCTIONS = `A continuación, se muestra una serie de afirmaciones con relación a tus competencias. Evalúa cada una utilizando una escala del 1 al 5, siendo 1 = "En poca medida" y 5 = "En gran medida". En caso de que consideres que la afirmación se refiere a un comportamiento no observado, marca dicha opción según corresponda.`;
+
+const PEER_INSTRUCTIONS = `A continuación, se muestra una serie de afirmaciones con relación a las competencias de la participante. Evalúa cada una utilizando una escala del 1 al 5, siendo 1 = "En poca medida" y 5 = "En gran medida". En caso de que consideres que la afirmación se refiere a un comportamiento que no has observado en ella, marca dicha opción según corresponda.`;
+
+const REL_DETAILS = {
+  Personal:["Familiar","Amigo","Otro","Anónimo"],
+  Profesional:["Jefe","Par","Subordinado","Proveedor/Cliente","Otro","Anónimo"]
+};
+
+let participants = [];
+let responses = [];
+let selectedSelfParticipant = null;
+let selectedPeerParticipant = null;
+let pendingConsentProceed = null;
+
+function showConsent(proceedFn){
+  pendingConsentProceed = proceedFn;
+  showView('view-consent');
+}
+function acceptConsent(){
+  const fn = pendingConsentProceed;
+  pendingConsentProceed = null;
+  if(fn) fn();
+}
+function declineConsent(){
+  pendingConsentProceed = null;
+  goHome();
+}
+
+// Pega aquí la configuración de tu proyecto de Firebase (Configuración del proyecto → tus apps → Config)
+// Ver instrucciones-migrar-a-firebase.md para cómo obtenerla.
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC8QaKy7dY5wcwtj6C9fPOOGcXaiZBRSwQ",
+  authDomain: "sheleads360.firebaseapp.com",
+  projectId: "sheleads360",
+  storageBucket: "sheleads360.firebasestorage.app",
+  messagingSenderId: "651789999652",
+  appId: "1:651789999652:web:464888c10b06c9d7f202b1"
+};
+
+let db = null;
+function getDb(){
+  if(!db){
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+  }
+  return db;
+}
+
+function setHomeStatus(message){
+  const el = document.getElementById('home-status');
+  if(!el) return;
+  el.innerHTML = message ? `<div class="status-banner">${escapeHtml(message)}</div>` : '';
+}
+
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Tiempo de espera agotado (${label}). Verifica tu conexión e inténtalo de nuevo.`)), ms))
+  ]);
+}
+
+// scope: 'participants' pide solo la lista de participantes (más rápido, ideal para
+// evaluación de pares, que no necesita el historial de respuestas). Sin scope, o
+// scope:'full', trae también todas las respuestas (autoevaluación, seguimiento, admin).
+async function loadData(scope){
+  if(FIREBASE_CONFIG.apiKey.indexOf('PEGA_AQUI') !== -1){
+    setHomeStatus('Falta configurar la conexión con Firebase (FIREBASE_CONFIG).');
+    return;
+  }
+  try{
+    const database = getDb();
+    const partSnap = await withTimeout(database.collection('participants').get(), 12000, 'participantes');
+    participants = partSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(p => !p.deleted)
+      .map(p => ({ id: p.id, name: p.name, pin: p.pin }));
+
+    if(scope !== 'participants'){
+      const respSnap = await withTimeout(database.collection('responses').get(), 12000, 'respuestas');
+      responses = respSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    setHomeStatus('');
+  }catch(e){
+    console.error('Error al cargar datos de Firebase:', e);
+    setHomeStatus('No se pudo conectar con la base de datos.\n' + e.message + '\nToca de nuevo el módulo para reintentar.');
+  }
+}
+
+function uid(prefix){ return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function genPin(){
+  let pin;
+  do{ pin = String(Math.floor(1000 + Math.random()*9000)); }
+  while(participants.some(p=>p.pin===pin));
+  return pin;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ---------------- View navigation ---------------- */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goHome(){ showView('view-home'); }
+
+function populateNameSelect(selectEl){
+  selectEl.innerHTML = '<option value="">Selecciona…</option>' +
+    participants.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+async function startSelf(){
+  await loadData();
+  populateNameSelect(document.getElementById('self-name'));
+  document.getElementById('self-pin').value='';
+  document.getElementById('self-auth-error').innerHTML='';
+  showView('view-self-auth');
+}
+async function startPeer(){
+  await loadData('participants');
+  populateNameSelect(document.getElementById('peer-name'));
+  document.getElementById('peer-pin').value='';
+  document.getElementById('peer-rel-type').value='';
+  document.getElementById('peer-rel-detail-wrap').style.display='none';
+  document.getElementById('peer-auth-error').innerHTML='';
+  showView('view-peer-auth');
+}
+
+async function startTrack(){
+  await loadData();
+  populateNameSelect(document.getElementById('track-name'));
+  document.getElementById('track-pin').value='';
+  document.getElementById('track-auth-error').innerHTML='';
+  showView('view-track-auth');
+}
+
+function updateRelDetail(){
+  const type = document.getElementById('peer-rel-type').value;
+  const wrap = document.getElementById('peer-rel-detail-wrap');
+  const sel = document.getElementById('peer-rel-detail');
+  if(!type){ wrap.style.display='none'; return; }
+  sel.innerHTML = REL_DETAILS[type].map(d=>`<option value="${d}">${d}</option>`).join('');
+  wrap.style.display='block';
+}
+
+/* ---------------- Self flow ---------------- */
+async function validateSelf(){
+  const sel = document.getElementById('self-name');
+  const pin = document.getElementById('self-pin').value.trim();
+  const errBox = document.getElementById('self-auth-error');
+  errBox.innerHTML='';
+  const p = participants.find(x=>x.id===sel.value);
+  if(!p){ errBox.innerHTML='<div class="error-msg">Selecciona tu nombre de la lista.</div>'; return; }
+  if(p.pin !== pin){ errBox.innerHTML='<div class="error-msg">El PIN ingresado no coincide. Verifica e intenta de nuevo.</div>'; return; }
+  const already = responses.find(r=>r.participantId===p.id && r.type==='self');
+  if(already){ errBox.innerHTML='<div class="error-msg">Ya se registró una autoevaluación para esta participante.</div>'; return; }
+  selectedSelfParticipant = p;
+  showConsent(()=>{
+    document.getElementById('self-form-name').textContent = p.name;
+    renderForm('self-form-el', ITEMS_SELF, 'primera', SELF_INSTRUCTIONS);
+    showView('view-self-form');
+  });
+}
+
+function renderForm(containerId, itemsSet, voice, intro){
+  const container = document.getElementById(containerId);
+  let html = '';
+  html += `<div class="section-block">
+    <div class="eyebrow">Sección 1</div>
+    <h2>Evaluación de competencias</h2>`;
+  if(intro){
+    html += `<div class="instructions-box">${intro}</div>`;
+  }
+  COMPETENCIES.forEach(comp=>{
+    html += `<div class="competency-block">
+      <h3>${comp.label}</h3>`;
+    itemsSet[comp.key].forEach((text,i)=>{
+      const name = `${comp.key}_${i}`;
+      html += `<div class="likert-item">
+        <div class="likert-q">${text}</div>
+        <div class="likert-scale">`;
+      LIKERT.forEach(opt=>{
+        const id = `${containerId}_${name}_${opt.v}`;
+        const inner = opt.text
+          ? `<span class="likert-text">${opt.text}</span>`
+          : `<span class="likert-num">${opt.num}</span>${opt.sub ? `<span class="likert-sub">${opt.sub}</span>` : ''}`;
+        html += `<div class="likert-opt${opt.v==='na' ? ' likert-na' : ''}">
+          <input type="radio" id="${id}" name="${name}" value="${opt.v}" required>
+          <label for="${id}">${inner}</label>
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  html += `<div class="section-block">
+    <div class="eyebrow">Sección 2</div>
+    <h2>Fortalezas</h2>
+    <p class="desc">${voice==='primera' ? '¿Cuáles consideras que son tus principales fortalezas? Por favor, menciona al menos un ejemplo concreto de una situación donde hayas demostrado una de las competencias anteriores.' : '¿Cuáles consideras que son las principales fortalezas de la participante? Por favor, menciona al menos un ejemplo concreto de una situación donde ella haya demostrado una de las competencias anteriores.'}</p>
+    <textarea name="strengths" required placeholder="Escribe aquí…"></textarea>
+  </div>`;
+  html += `<div class="section-block">
+    <div class="eyebrow">Sección 3</div>
+    <h2>Oportunidades de mejora</h2>
+    <p class="desc">${voice==='primera' ? '¿Qué aspectos consideras que podrías fortalecer?' : '¿Qué aspectos consideras que la participante debería fortalecer? Por favor, ofrece una sugerencia específica de cambio o comportamiento a desarrollar.'}</p>
+    <textarea name="improvements" required placeholder="Escribe aquí…"></textarea>
+  </div>`;
+  html += `<div class="section-block">
+    <div class="eyebrow">Sección 4</div>
+    <h2>Contribución al programa</h2>
+    <p class="desc">${voice==='primera' ? 'Como parte de este programa, ¿cómo describirías tu contribución en el aprendizaje y desarrollo de quienes te rodean?' : 'Como parte de este programa, ¿cómo describirías la contribución de la participante en el aprendizaje y desarrollo de quienes la rodean?'}</p>
+    <textarea name="contribution" required placeholder="Escribe aquí…"></textarea>
+  </div>`;
+  html += `<button type="submit" class="btn btn-primary btn-block" id="submit-btn-${containerId}">Enviar respuestas</button>`;
+  container.innerHTML = html;
+}
+
+function collectScores(formEl){
+  const scores = {};
+  COMPETENCIES.forEach(comp=>{
+    scores[comp.key] = ITEMS_SELF[comp.key].map((_,i)=>{
+      const el = formEl.querySelector(`input[name="${comp.key}_${i}"]:checked`);
+      if(!el) return null;
+      return el.value === 'na' ? null : Number(el.value);
+    });
+  });
+  return scores;
+}
+
+async function submitSelf(e){
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('submit-btn-self-form-el');
+  btn.disabled = true;
+  const scores = collectScores(form);
+  const strengths = form.querySelector('[name=strengths]').value.trim();
+  const improvements = form.querySelector('[name=improvements]').value.trim();
+  const contribution = form.querySelector('[name=contribution]').value.trim();
+  const pid = selectedSelfParticipant.id;
+
+  btn.textContent = 'Guardando respuestas…';
+  const newResponse = {
+    id: uid('resp'),
+    participantId: pid,
+    participantName: selectedSelfParticipant.name,
+    type: 'self',
+    evaluatorName: selectedSelfParticipant.name,
+    relType: '', relDetail: '',
+    scores, strengths, improvements, contribution,
+    submittedAt: new Date().toISOString()
+  };
+  responses.push(newResponse);
+  try{
+    await getDb().collection('responses').add(newResponse);
+  }catch(err){
+    showToast('No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
+    btn.disabled = false; btn.textContent = 'Enviar respuestas';
+    return;
+  }
+
+  btn.textContent = 'Procesando informe…';
+  try{
+    await processIndividualReport(pid);
+  }catch(err){
+    console.error('Error al procesar el informe (no crítico):', err);
+  }
+
+  showView('view-self-done');
+}
+
+/* ---------------- Peer flow ---------------- */
+async function validatePeer(){
+  const sel = document.getElementById('peer-name');
+  const pin = document.getElementById('peer-pin').value.trim();
+  const relType = document.getElementById('peer-rel-type').value;
+  const relDetail = document.getElementById('peer-rel-detail').value;
+  const errBox = document.getElementById('peer-auth-error');
+  errBox.innerHTML='';
+  const p = participants.find(x=>x.id===sel.value);
+  if(!p){ errBox.innerHTML='<div class="error-msg">Selecciona a la participante que vas a evaluar.</div>'; return; }
+  if(p.pin !== pin){ errBox.innerHTML='<div class="error-msg">El PIN ingresado no coincide. Verifica e intenta de nuevo.</div>'; return; }
+  if(!relType || !relDetail){ errBox.innerHTML='<div class="error-msg">Indica tu relación con la participante.</div>'; return; }
+  selectedPeerParticipant = { participant:p, relType, relDetail };
+  showConsent(()=>{
+    document.getElementById('peer-form-name').textContent = p.name;
+    renderForm('peer-form-el', ITEMS_PEER, 'tercera', PEER_INSTRUCTIONS);
+    showView('view-peer-form');
+  });
+}
+
+async function submitPeer(e){
+  e.preventDefault();
+  const form = e.target;
+  const btn = document.getElementById('submit-btn-peer-form-el');
+  btn.disabled = true;
+  const scores = collectScores(form);
+  const strengths = form.querySelector('[name=strengths]').value.trim();
+  const improvements = form.querySelector('[name=improvements]').value.trim();
+  const contribution = form.querySelector('[name=contribution]').value.trim();
+  const { participant, relType, relDetail } = selectedPeerParticipant;
+
+  btn.textContent = 'Guardando respuestas…';
+  const newResponse = {
+    id: uid('resp'),
+    participantId: participant.id,
+    participantName: participant.name,
+    type: 'peer',
+    evaluatorName: '',
+    relType, relDetail,
+    scores, strengths, improvements, contribution,
+    submittedAt: new Date().toISOString()
+  };
+  responses.push(newResponse);
+  try{
+    await getDb().collection('responses').add(newResponse);
+  }catch(err){
+    showToast('No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
+    btn.disabled = false; btn.textContent = 'Enviar respuestas';
+    return;
+  }
+
+  btn.textContent = 'Procesando informe…';
+  try{
+    await processIndividualReport(participant.id);
+  }catch(err){
+    console.error('Error al procesar el informe (no crítico):', err);
+  }
+
+  showView('view-peer-done');
+}
+
+/* ---------------- Report processing ---------------- */
+async function processIndividualReport(participantId){
+  const p = participants.find(x=>x.id===participantId);
+  if(!p) return;
+  const own = responses.find(r=>r.participantId===participantId && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===participantId && r.type==='peer');
+
+  const competencies = {};
+  COMPETENCIES.forEach(comp=>{
+    const selfAvg = own ? avg(own.scores[comp.key]) : null;
+    const peerAvgs = peers.map(r=>avg(r.scores[comp.key])).filter(v=>v!=null);
+    const peerAvg = peerAvgs.length ? peerAvgs.reduce((a,b)=>a+b,0)/peerAvgs.length : null;
+    competencies[comp.key] = { selfAvg, peerAvg, peerCount: peerAvgs.length };
+  });
+
+  const report = {
+    participantId, participantName: p.name,
+    competencies,
+    strengths: [
+      ...(own ? [{ source:'Autoevaluación', text: own.strengths }] : []),
+      ...peers.map(r=>({ source:`${r.relDetail} (entorno ${r.relType.toLowerCase()})`, text:r.strengths }))
+    ],
+    improvements: [
+      ...(own ? [{ source:'Autoevaluación', text: own.improvements }] : []),
+      ...peers.map(r=>({ source:`${r.relDetail} (entorno ${r.relType.toLowerCase()})`, text:r.improvements }))
+    ],
+    contributions: [
+      ...(own ? [{ source:'Autoevaluación', text: own.contribution }] : []),
+      ...peers.map(r=>({ source:`${r.relDetail} (entorno ${r.relType.toLowerCase()})`, text:r.contribution }))
+    ],
+    responseCount: (own?1:0) + peers.length,
+    processedAt: new Date().toISOString()
+  };
+  return report;
+}
+
+/* ---------------- Track flow ---------------- */
+const REL_ORDER = [
+  { type:'Personal', detail:'Familiar', label:'Familiar', color:'#572975' },
+  { type:'Personal', detail:'Amigo', label:'Amigo', color:'#815c97' },
+  { type:'Personal', detail:'Otro', label:'Otro (personal)', color:'#ab90b9' },
+  { type:'Personal', detail:'Anónimo', label:'Anónimo (personal)', color:'#c9b8d1' },
+  { type:'Profesional', detail:'Jefe', label:'Jefe', color:'#2f2c35' },
+  { type:'Profesional', detail:'Par', label:'Par', color:'#4d3b57' },
+  { type:'Profesional', detail:'Subordinado', label:'Subordinado', color:'#6d5a75' },
+  { type:'Profesional', detail:'Proveedor/Cliente', label:'Proveedor/Cliente', color:'#8a7391' },
+  { type:'Profesional', detail:'Otro', label:'Otro (profesional)', color:'#b9a2c4' },
+  { type:'Profesional', detail:'Anónimo', label:'Anónimo (profesional)', color:'#9b8aa3' }
+];
+
+async function validateTrack(){
+  const sel = document.getElementById('track-name');
+  const pin = document.getElementById('track-pin').value.trim();
+  const errBox = document.getElementById('track-auth-error');
+  errBox.innerHTML='';
+  const p = participants.find(x=>x.id===sel.value);
+  if(!p){ errBox.innerHTML='<div class="error-msg">Selecciona tu nombre de la lista.</div>'; return; }
+  if(p.pin !== pin){ errBox.innerHTML='<div class="error-msg">El PIN ingresado no coincide. Verifica e intenta de nuevo.</div>'; return; }
+  renderTrackDashboard(p);
+  showView('view-track-dashboard');
+}
+
+function renderTrackDashboard(p){
+  const own = responses.find(r=>r.participantId===p.id && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===p.id && r.type==='peer');
+  const personal = peers.filter(r=>r.relType==='Personal');
+  const profesional = peers.filter(r=>r.relType==='Profesional');
+  const total = peers.length;
+
+  const counts = REL_ORDER.map(r => peers.filter(x=>x.relType===r.type && x.relDetail===r.detail).length);
+  const maxCount = Math.max(1, ...counts);
+
+  // Donut (conic-gradient) built from category counts
+  let donutCss = '';
+  if(total > 0){
+    let acc = 0;
+    const stops = [];
+    REL_ORDER.forEach((r,i)=>{
+      if(counts[i] === 0) return;
+      const start = (acc/total)*360;
+      acc += counts[i];
+      const end = (acc/total)*360;
+      stops.push(`${r.color} ${start}deg ${end}deg`);
+    });
+    donutCss = `conic-gradient(${stops.join(', ')})`;
+  } else {
+    donutCss = `conic-gradient(var(--grey-200) 0deg 360deg)`;
+  }
+
+  const lastDate = [...(own?[own]:[]), ...peers]
+    .map(r=>r.submittedAt).sort().slice(-1)[0];
+  const lastDateFmt = lastDate ? new Date(lastDate).toLocaleDateString('es-EC',{day:'numeric',month:'long',year:'numeric'}) : null;
+
+  const legendRows = REL_ORDER.map((r,i)=>{
+    const c = counts[i];
+    const pct = Math.round((c/maxCount)*100);
+    return `<div class="legend-row${c===0 ? ' legend-row-empty' : ''}">
+      <span class="legend-dot" style="background:${r.color}"></span>
+      <span class="legend-label">${r.label}</span>
+      <div class="legend-bar-track"><div class="legend-bar-fill" style="width:${c>0?Math.max(pct,6):0}%;background:${r.color}"></div></div>
+      <span class="legend-count">${c}</span>
+    </div>`;
+  }).join('');
+
+  const statusHtml = own
+    ? `<div class="status-pill status-done">✓ Completa</div>`
+    : `<div class="status-pill status-pending">Pendiente</div>`;
+
+  const encourage = !own
+    ? 'Aún no has completado tu autoevaluación — es el primer paso de tu proceso.'
+    : total === 0
+      ? 'Ya completaste tu autoevaluación. Ahora invita a personas de tu entorno a evaluarte.'
+      : total < 3
+        ? 'Vas por buen camino. Entre más evaluadores de distintos entornos participen, más completa será tu visión 360.'
+        : '¡Excelente avance! Ya tienes una visión 360 bastante completa de tu proceso.';
+
+  document.getElementById('track-dashboard-content').innerHTML = `
+    <div class="card track-hero">
+      <p class="muted" style="margin:0 0 4px;">Progreso de</p>
+      <h1 class="hero" style="font-size:28px;margin-bottom:4px;">${escapeHtml(p.name)}</h1>
+      <p class="lede" style="margin-bottom:0;font-size:14px;">${escapeHtml(encourage)}</p>
+    </div>
+
+    <div class="track-stat-grid">
+      <div class="card track-stat">
+        <div class="track-stat-label">Autoevaluación</div>
+        ${statusHtml}
+      </div>
+      <div class="card track-stat">
+        <div class="track-stat-label">Evaluaciones de pares recibidas</div>
+        <div class="track-stat-number">${total}</div>
+      </div>
+      <div class="card track-stat">
+        <div class="track-stat-label">Última actividad registrada</div>
+        <div class="track-stat-date">${lastDateFmt ? lastDateFmt : 'Sin actividad aún'}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="section-block" style="margin-bottom:18px;">
+        <div class="eyebrow">Desglose</div>
+        <h2>Evaluadores por entorno</h2>
+        <p class="desc">Cuántas personas de tu entorno personal y profesional ya te han evaluado.</p>
+      </div>
+      <div class="env-grid">
+        <div class="env-card">
+          <div class="env-head"><span class="env-dot" style="background:var(--plum-700)"></span>Entorno personal</div>
+          <div class="env-count">${personal.length}</div>
+          <div class="env-sub">evaluación${personal.length===1?'':'es'} recibida${personal.length===1?'':'s'}</div>
+        </div>
+        <div class="env-card">
+          <div class="env-head"><span class="env-dot" style="background:var(--plum-300)"></span>Entorno profesional</div>
+          <div class="env-count">${profesional.length}</div>
+          <div class="env-sub">evaluación${profesional.length===1?'':'es'} recibida${profesional.length===1?'':'s'}</div>
+        </div>
+      </div>
+
+      <div class="donut-row">
+        <div class="donut" style="background:${donutCss}">
+          <div class="donut-hole">
+            <span class="donut-number">${total}</span>
+            <span class="donut-caption">${total===1?'evaluador':'evaluadores'}</span>
+          </div>
+        </div>
+        <div class="legend-list">
+          ${legendRows}
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-link" style="margin-top:36px;"><button onclick="goHome()">← Volver al inicio</button></div>
+  `;
+}
+
+/* ---------------- Self-service report view ---------------- */
+let selectedReportParticipant = null;
+
+async function startReportView(){
+  await loadData();
+  populateNameSelect(document.getElementById('report-name'));
+  document.getElementById('report-pin').value='';
+  document.getElementById('report-auth-error').innerHTML='';
+  showView('view-report-auth');
+}
+
+async function validateReportAccess(){
+  const sel = document.getElementById('report-name');
+  const pin = document.getElementById('report-pin').value.trim();
+  const errBox = document.getElementById('report-auth-error');
+  errBox.innerHTML='';
+  const p = participants.find(x=>x.id===sel.value);
+  if(!p){ errBox.innerHTML='<div class="error-msg">Selecciona tu nombre de la lista.</div>'; return; }
+  if(p.pin !== pin){ errBox.innerHTML='<div class="error-msg">El PIN ingresado no coincide. Verifica e intenta de nuevo.</div>'; return; }
+  selectedReportParticipant = p;
+  renderOwnReport(p);
+  showView('view-report-view');
+}
+
+function renderOwnReport(p){
+  document.getElementById('report-view-name').textContent = p.name;
+  const own = responses.find(r=>r.participantId===p.id && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===p.id && r.type==='peer');
+  const personalPeers = peers.filter(r=>r.relType==='Personal');
+  const professionalPeers = peers.filter(r=>r.relType==='Profesional');
+  const html = buildReportHtml(p, own, personalPeers, professionalPeers);
+  document.getElementById('report-view-iframe').srcdoc = html;
+}
+
+async function downloadOwnPdf(){
+  if(!selectedReportParticipant) return;
+  await generatePdf(selectedReportParticipant.id);
+}
+async function downloadOwnHtml(){
+  if(!selectedReportParticipant) return;
+  await downloadHtmlReport(selectedReportParticipant.id);
+}
+
+/* ---------------- Admin ---------------- */
+function goAdminLogin(){
+  document.getElementById('admin-pass').value='';
+  document.getElementById('admin-login-error').innerHTML='';
+  showView('view-admin-login');
+}
+async function checkAdminPass(){
+  const val = document.getElementById('admin-pass').value;
+  if(val !== ADMIN_PASSWORD){
+    document.getElementById('admin-login-error').innerHTML = '<div class="error-msg">Clave incorrecta.</div>';
+    return;
+  }
+  await loadData();
+  renderAdmin();
+  showView('view-admin');
+}
+
+function renderAdmin(){
+  const tbody = document.querySelector('#admin-participant-table tbody');
+  if(participants.length===0){
+    tbody.innerHTML = `<tr><td colspan="5" class="muted">Aún no hay participantes. Agrega la primera arriba.</td></tr>`;
+  }else{
+    tbody.innerHTML = participants.map(p=>{
+      const hasSelf = responses.some(r=>r.participantId===p.id && r.type==='self');
+      const peerCount = responses.filter(r=>r.participantId===p.id && r.type==='peer').length;
+      return `<tr>
+        <td>${escapeHtml(p.name)}</td>
+        <td><span class="pin-tag">${p.pin}</span></td>
+        <td><span class="badge ${hasSelf?'on':''}">${hasSelf?'Completa':'Pendiente'}</span></td>
+        <td><span class="badge ${peerCount>0?'on':''}">${peerCount} respuesta${peerCount===1?'':'s'}</span></td>
+        <td><button class="row-btn" onclick="removeParticipant('${p.id}')">Eliminar</button></td>
+      </tr>`;
+    }).join('');
+  }
+  const reportSel = document.getElementById('report-participant');
+  reportSel.innerHTML = participants.length
+    ? participants.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')
+    : '<option value="">Sin participantes</option>';
+}
+
+async function addParticipant(){
+  const input = document.getElementById('new-participant-name');
+  const name = input.value.trim();
+  if(!name){ showToast('Ingresa un nombre.'); return; }
+  const pin = genPin();
+  try{
+    const dupSnap = await getDb().collection('participants').where('name', '==', name).get();
+    const activeDup = dupSnap.docs.some(d => !d.data().deleted);
+    if(activeDup){
+      showToast(`Ya existe una participante llamada "${name}".`);
+      await loadData();
+      renderAdmin();
+      return;
+    }
+    const ref = await getDb().collection('participants').add({ name, pin, deleted:false });
+    participants.push({ id: ref.id, name, pin });
+  }catch(e){
+    showToast('No se pudo guardar la participante. Intenta de nuevo.');
+    return;
+  }
+  input.value='';
+  renderAdmin();
+  showToast(`Agregada. PIN: ${pin}`);
+}
+async function removeParticipant(id){
+  if(!confirm('¿Eliminar esta participante? También se conservarán sus respuestas ya registradas, pero ya no aparecerá en las listas.')) return;
+  try{
+    await getDb().collection('participants').doc(id).update({ deleted:true });
+  }catch(e){
+    showToast('No se pudo eliminar. Intenta de nuevo.');
+    return;
+  }
+  participants = participants.filter(p=>p.id!==id);
+  renderAdmin();
+}
+
+/* ---------------- Excel export ---------------- */
+async function exportExcel(){
+  await loadData();
+  const wb = XLSX.utils.book_new();
+
+  const partsSheet = participants.map(p=>({ Nombre:p.name, PIN:p.pin }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(partsSheet), "Participantes");
+
+  const rows = [];
+  responses.forEach(r=>{
+    const base = {
+      "Participante": r.participantName,
+      "Tipo": r.type==='self' ? 'Autoevaluación' : 'Evaluación de pares',
+      "Entorno": r.relType || '',
+      "Relación": r.relDetail || '',
+      "Fecha": r.submittedAt
+    };
+    COMPETENCIES.forEach(comp=>{
+      ITEMS_SELF[comp.key].forEach((text,i)=>{
+        base[`${comp.label} - Ítem ${i+1}`] = r.scores[comp.key][i];
+      });
+      const vals = r.scores[comp.key].filter(v=>v!=null);
+      base[`${comp.label} - Promedio`] = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '';
+    });
+    base["Fortalezas"] = r.strengths;
+    base["Oportunidades de mejora"] = r.improvements;
+    base["Contribución al programa"] = r.contribution;
+    rows.push(base);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Respuestas");
+
+  XLSX.writeFile(wb, `evaluacion360_espae_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+/* ---------------- Competency scores export ---------------- */
+async function exportCompetencyScores(){
+  await loadData();
+  const rows = participants.map(p=>{
+    const own = responses.find(r=>r.participantId===p.id && r.type==='self');
+    const peers = responses.filter(r=>r.participantId===p.id && r.type==='peer');
+    const row = { "Participante": p.name };
+    COMPETENCIES.forEach(c=>{
+      const selfAvg = own ? avg(own.scores[c.key]) : null;
+      const peerAvg = avg(peers.flatMap(r=>r.scores[c.key]||[]));
+      const allVals = [...(own && own.scores[c.key] ? own.scores[c.key] : []), ...peers.flatMap(r=>r.scores[c.key]||[])];
+      const generalAvg = avg(allVals);
+      row[`${c.label} - Autoeval.`] = selfAvg!=null ? Number(selfAvg.toFixed(2)) : '';
+      row[`${c.label} - Pares`] = peerAvg!=null ? Number(peerAvg.toFixed(2)) : '';
+      row[`${c.label} - General`] = generalAvg!=null ? Number(generalAvg.toFixed(2)) : '';
+    });
+    row["Autoevaluación completa"] = own ? 'Sí' : 'No';
+    row["Evaluaciones de pares recibidas"] = peers.length;
+    return row;
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Puntuaciones por competencia");
+  XLSX.writeFile(wb, `puntuaciones_competencias_espae_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+/* ---------------- PDF report ---------------- */
+function avg(arr){ if(!arr) return null; const v = arr.filter(x=>x!=null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
+
+async function generatePdf(pidOverride){
+  const pid = pidOverride || document.getElementById('report-participant').value;
+  if(!pid){ showToast('Selecciona una participante.'); return; }
+
+  // Open the tab synchronously on the click, before any awaits, so popup blockers allow it.
+  const popup = window.open('', '_blank');
+
+  await loadData();
+  const p = participants.find(x=>x.id===pid);
+  if(!p){ showToast('Selecciona una participante.'); if(popup) popup.close(); return; }
+  const own = responses.find(r=>r.participantId===pid && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===pid && r.type==='peer');
+  const personalPeers = peers.filter(r=>r.relType==='Personal');
+  const professionalPeers = peers.filter(r=>r.relType==='Profesional');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const marginX = 48;
+  const contentW = pageW - marginX*2;
+  let y = 56;
+
+  const plum900=[47,44,53], plum700=[87,41,117], plum500=[129,92,151], plum300=[171,144,185];
+  const lilac100=[213,198,220], grey200=[208,204,213], grey=[112,105,120];
+  const vSelf=[89,78,255], vPersonal=[52,194,164], vProfessional=[240,79,83];
+
+  function ensureSpace(h){
+    if(y + h > pageH - 50){ doc.addPage(); y = 56; }
+  }
+  function sectionTitle(num, text){
+    ensureSpace(34);
+    doc.setFillColor(...plum700);
+    doc.circle(marginX+9, y-4, 9, 'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+    doc.text(String(num), marginX+9, y-1, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...plum900);
+    doc.text(text, marginX+26, y);
+    y += 26;
+  }
+  function label(text){
+    ensureSpace(16);
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...plum700);
+    doc.text(text.toUpperCase(), marginX, y); y += 15;
+  }
+  function paragraph(text, size=10, color=plum900){
+    doc.setFont('helvetica','normal'); doc.setFontSize(size); doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(text, contentW);
+    lines.forEach(line=>{ ensureSpace(size+4); doc.text(line, marginX, y); y += size+4; });
+    y += 6;
+  }
+  function smallMuted(text, size=8.5){
+    doc.setFont('helvetica','italic'); doc.setFontSize(size); doc.setTextColor(...grey);
+    const lines = doc.splitTextToSize(text, contentW);
+    lines.forEach(line=>{ ensureSpace(size+3); doc.text(line, marginX, y); y += size+3; });
+    y += 4;
+  }
+
+  /* ---- Cover ---- */
+  // Auto-fit the participant's name: shrink the font only if it needs more than
+  // 2 lines, and never truncate — the banner height below adapts to however many
+  // lines the name (and the fixed subtitle) end up needing.
+  let nameFontSize = 23;
+  doc.setFont('helvetica','bold'); doc.setFontSize(nameFontSize);
+  let nameLines = doc.splitTextToSize(p.name, contentW);
+  while(nameLines.length > 2 && nameFontSize > 14){
+    nameFontSize -= 1;
+    doc.setFontSize(nameFontSize);
+    nameLines = doc.splitTextToSize(p.name, contentW);
+  }
+  const nameLineH = nameFontSize + 6;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  const coverLines = doc.splitTextToSize('SheLeads360 · Women Cross Mentoring — Diplomado Internacional Desarrollo de Habilidades para Mujeres Directivas (Cuarta edición)', contentW);
+
+  const bannerH = 34 + (nameLines.length*nameLineH) + 8 + (coverLines.length*12) + 20;
+
+  doc.setFillColor(...plum700);
+  doc.rect(0,0,pageW,bannerH,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('INFORME INDIVIDUAL · EVALUACIÓN 360°', marginX, 24);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(nameFontSize);
+  let cy = 24 + nameLineH - 6;
+  nameLines.forEach(l=>{ doc.text(l, marginX, cy); cy += nameLineH; });
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  cy += 4;
+  coverLines.forEach(l=>{ doc.text(l, marginX, cy); cy += 12; });
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+  doc.text('ESPAE, ESCUELA DE NEGOCIOS DE LA ESPOL', marginX, cy+6);
+
+  y = bannerH + 24;
+  const totalEvals = (own?1:0) + peers.length;
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...grey);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-EC',{year:'numeric',month:'long',day:'numeric'})}   ·   ${totalEvals} evaluación${totalEvals===1?'':'es'} considerada${totalEvals===1?'':'s'}   ·   Confidencial`, marginX, y);
+  y += 28;
+
+  /* ================= 1. Presentación ================= */
+  sectionTitle(1, 'Presentación');
+  paragraph('Este informe recoge los resultados de tu Evaluación 360°, desarrollada a través de la app SheLeads360, como parte de Women Cross Mentoring, una actividad en el marco del Diplomado Internacional de Desarrollo de Habilidades para Mujeres Directivas de ESPAE. Fue diseñado para ofrecerte un análisis detallado de la información recopilada por el equipo de ESPAE a partir de tu autoevaluación y de las personas de tu entorno personal y profesional que te evaluaron.');
+  paragraph('A continuación encontrarás un resumen de las puntuaciones reportadas, así como el detalle de las fortalezas, oportunidades de mejora y contribución al programa identificadas en este proceso. Esta información es un insumo valioso para la construcción de tu plan de desarrollo personal y profesional.');
+  label('Propósitos de este informe');
+  const purposes = [
+    'Desarrollar consciencia de cómo otras personas perciben tu comportamiento en el entorno profesional.',
+    'Identificar los cambios que necesitas implementar y desarrollar.',
+    'Explorar e identificar las razones que motivaron las puntuaciones que has recibido.',
+    'Brindarte la oportunidad de responsabilizarte por tu propio desarrollo.'
+  ];
+  purposes.forEach((txt,i)=>{
+    const lines = doc.splitTextToSize(txt, contentW-26);
+    ensureSpace(lines.length*12+8);
+    doc.setFillColor(...plum700);
+    doc.circle(marginX+7, y-3, 7, 'F');
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+    doc.text(String(i+1), marginX+7, y, {align:'center'});
+    doc.setTextColor(...plum900); doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+    lines.forEach((l,li)=>{ doc.text(l, marginX+20, y + li*12); });
+    y += lines.length*12 + 8;
+  });
+  y += 8;
+
+  /* ================= 2. Recuento de evaluaciones ================= */
+  sectionTitle(2, 'Recuento de las evaluaciones recibidas');
+  paragraph('Este informe se elaboró considerando las siguientes evaluaciones:');
+  const stats = [
+    ['Autoevaluación', own ? '1' : '0'],
+    ['Evaluaciones de pares', String(peers.length)],
+    ['Entorno personal', String(personalPeers.length)],
+    ['Entorno profesional', String(professionalPeers.length)]
+  ];
+  ensureSpace(52);
+  const statColW = contentW/4;
+  stats.forEach((s,i)=>{
+    const sx = marginX + statColW*i;
+    doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(...plum700);
+    doc.text(s[1], sx, y+20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...grey);
+    const lbl = doc.splitTextToSize(s[0], statColW-10);
+    lbl.forEach((l,li)=> doc.text(l, sx, y+34+li*10));
+  });
+  y += 62;
+
+  paragraph(`Entorno personal: ${personalPeers.length} evaluador${personalPeers.length===1?'':'es'}`, 9.5);
+  paragraph(`Entorno profesional: ${professionalPeers.length} evaluador${professionalPeers.length===1?'':'es'}`, 9.5);
+  y += 4;
+
+  /* ================= 3. Evaluación de competencias ================= */
+  sectionTitle(3, 'Evaluación de competencias');
+  paragraph('El gráfico radial compara, para cada una de las 7 competencias evaluadas, tu autopercepción con la percepción de tu entorno personal y de tu entorno profesional. Cuanto más se acerca una línea al borde exterior, más alta es la puntuación (escala 1 a 5). Las diferencias entre líneas señalan dónde tu autopercepción coincide —o no— con la mirada de los demás.', 9.5);
+
+  const selfCompAvg={}, personalCompAvg={}, professionalCompAvg={}, generalCompAvg={};
+  COMPETENCIES.forEach(c=>{
+    selfCompAvg[c.key] = own ? avg(own.scores[c.key]) : null;
+    personalCompAvg[c.key] = avg(personalPeers.flatMap(r=>r.scores[c.key]));
+    professionalCompAvg[c.key] = avg(professionalPeers.flatMap(r=>r.scores[c.key]));
+    const allVals = [...(own && own.scores[c.key] ? own.scores[c.key] : []), ...personalPeers.flatMap(r=>r.scores[c.key]||[]), ...professionalPeers.flatMap(r=>r.scores[c.key]||[])];
+    generalCompAvg[c.key] = avg(allVals);
+  });
+
+  ensureSpace(232);
+  const radarR = 88;
+  const radarCx = marginX + contentW/2;
+  const radarCy = y + radarR + 10;
+  function radarPt(ratio, i){
+    const angle = (-90 + (360/7)*i) * Math.PI/180;
+    return [radarCx + radarR*ratio*Math.cos(angle), radarCy + radarR*ratio*Math.sin(angle)];
+  }
+  doc.setDrawColor(...grey200); doc.setLineWidth(0.6);
+  for(let level=1; level<=5; level++){
+    const ratio = level/5;
+    for(let i=0;i<7;i++){
+      const [x1,yy1]=radarPt(ratio,i);
+      const [x2,yy2]=radarPt(ratio,(i+1)%7);
+      doc.line(x1,yy1,x2,yy2);
+    }
+  }
+  for(let i=0;i<7;i++){
+    const [x,yy]=radarPt(1,i);
+    doc.line(radarCx, radarCy, x, yy);
+    const [lx,ly]=radarPt(1.16,i);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...plum900);
+    doc.text(String(i+1), lx, ly, {align:'center'});
+  }
+  function drawSeries(valsObj, color){
+    doc.setDrawColor(...color); doc.setLineWidth(1.4);
+    for(let i=0;i<7;i++){
+      const c1 = COMPETENCIES[i], c2 = COMPETENCIES[(i+1)%7];
+      const v1 = valsObj[c1.key]!=null ? valsObj[c1.key]/5 : 0;
+      const v2 = valsObj[c2.key]!=null ? valsObj[c2.key]/5 : 0;
+      const [x1,yy1]=radarPt(v1,i);
+      const [x2,yy2]=radarPt(v2,(i+1)%7);
+      doc.line(x1,yy1,x2,yy2);
+    }
+    doc.setFillColor(...color);
+    COMPETENCIES.forEach((c,i)=>{
+      const v = valsObj[c.key]!=null ? valsObj[c.key]/5 : 0;
+      const [x,yy]=radarPt(v,i);
+      doc.circle(x,yy,1.8,'F');
+    });
+  }
+  drawSeries(professionalCompAvg, vProfessional);
+  drawSeries(personalCompAvg, vPersonal);
+  drawSeries(selfCompAvg, vSelf);
+
+  y = radarCy + radarR + 22;
+
+  const legendItems = [['Autoevaluación',vSelf],['Entorno personal',vPersonal],['Entorno profesional',vProfessional]];
+  let lx2 = marginX;
+  legendItems.forEach(([txt,col])=>{
+    doc.setFillColor(...col); doc.rect(lx2, y-8, 9, 9, 'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...plum900);
+    doc.text(txt, lx2+13, y);
+    lx2 += 13 + doc.getTextWidth(txt) + 22;
+  });
+  y += 18;
+
+  const keyText = COMPETENCIES.map((c,i)=>`${i+1} ${c.label}`).join('   ·   ');
+  smallMuted(keyText, 8);
+  y += 4;
+
+  paragraph('La siguiente tabla presenta el promedio simple de cada competencia (a partir de sus 3 ítems) por cada fuente, y el promedio general que agrega todas las evaluaciones recibidas.', 9.5);
+  const tCols = [175, 78, 78, 78, 78];
+  const tHeaders = ['Competencia','Autoeval.','Personal','Profesional','General'];
+  const tableW = tCols.reduce((a,b)=>a+b,0);
+  const rowH = 20;
+  // Every row (header, each competency, and the highlighted general-average row)
+  // occupies exactly rowH, with its fill/divider anchored at the row's own top —
+  // this keeps rows from bleeding into each other regardless of how many precede them.
+  ensureSpace(rowH+2);
+  doc.setFillColor(...plum700); doc.rect(marginX, y, tableW, rowH-1, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+  let tx = marginX+6;
+  tHeaders.forEach((h,i)=>{ doc.text(h, tx, y+13); tx += tCols[i]; });
+  y += rowH;
+  COMPETENCIES.forEach(c=>{
+    ensureSpace(rowH);
+    doc.setDrawColor(...grey200); doc.line(marginX, y, marginX+tableW, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...plum900);
+    tx = marginX+6;
+    const row = [c.label, selfCompAvg[c.key], personalCompAvg[c.key], professionalCompAvg[c.key], generalCompAvg[c.key]];
+    row.forEach((v,i)=>{
+      const txt = i===0 ? v : (v!=null ? v.toFixed(2) : '—');
+      doc.text(String(txt), tx, y+13);
+      tx += tCols[i];
+    });
+    y += rowH;
+  });
+  ensureSpace(rowH+2);
+  doc.setFillColor(...lilac100); doc.rect(marginX, y, tableW, rowH-1, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...plum900);
+  tx = marginX+6;
+  const genRow = ['Promedio general del perfil',
+    avg(COMPETENCIES.map(c=>selfCompAvg[c.key])),
+    avg(COMPETENCIES.map(c=>personalCompAvg[c.key])),
+    avg(COMPETENCIES.map(c=>professionalCompAvg[c.key])),
+    avg(COMPETENCIES.map(c=>generalCompAvg[c.key]))];
+  genRow.forEach((v,i)=>{
+    const txt = i===0 ? v : (v!=null ? v.toFixed(2) : '—');
+    doc.text(String(txt), tx, y+13);
+    tx += tCols[i];
+  });
+  y += rowH + 12;
+
+  /* ================= 4. Ranking de comportamientos ================= */
+  sectionTitle(4, 'Ranking de comportamientos');
+  paragraph('Este ranking ordena los comportamientos evaluados según el promedio combinado de todas las evaluaciones de pares (entorno personal + profesional), de mayor a menor puntuación.', 9.5);
+
+  const allItems = [];
+  COMPETENCIES.forEach(c=>{
+    ITEMS_PEER[c.key].forEach((text,i)=>{
+      const vals = [...personalPeers.map(r=>r.scores[c.key][i]), ...professionalPeers.map(r=>r.scores[c.key][i])];
+      const pooled = avg(vals);
+      if(pooled != null) allItems.push({text, competency:c.label, score:pooled});
+    });
+  });
+  const sortedDesc = [...allItems].sort((a,b)=>b.score-a.score);
+  const top10 = sortedDesc.slice(0,10);
+  const bottom10 = [...allItems].sort((a,b)=>a.score-b.score).slice(0,10);
+
+  function rankBlock(title, list, badgeColor){
+    label(title);
+    if(list.length===0){ paragraph('Aún no hay suficientes evaluaciones de pares para calcular este ranking.', 9.5); return; }
+    list.forEach((it,i)=>{
+      const lines = doc.splitTextToSize(it.text, contentW-70);
+      const blockH = Math.max(24, lines.length*11+12);
+      ensureSpace(blockH+4);
+      doc.setFillColor(...badgeColor);
+      doc.circle(marginX+9, y+6, 9, 'F');
+      doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(String(i+1), marginX+9, y+9, {align:'center'});
+      doc.setTextColor(...plum900); doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+      lines.forEach((l,li)=> doc.text(l, marginX+26, y+4+li*11));
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.8); doc.setTextColor(...plum500);
+      doc.text(it.competency.toUpperCase(), marginX+26, y+4+lines.length*11+2);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...plum900);
+      doc.text(it.score.toFixed(1), pageW-marginX, y+9, {align:'right'});
+      y += blockH + 4;
+    });
+    y += 8;
+  }
+  rankBlock('Top 10 · Comportamientos mejor evaluados', top10, plum700);
+  rankBlock('Top 10 · Mayores oportunidades de mejora', bottom10, plum300);
+
+  /* ================= 5. Análisis detallado de comportamientos ================= */
+  sectionTitle(5, 'Análisis detallado de comportamientos');
+  paragraph('Detalle ítem por ítem, agrupado por competencia, comparando el promedio de tu entorno personal frente al de tu entorno profesional.', 9.5);
+
+  COMPETENCIES.forEach(c=>{
+    ensureSpace(24);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(...plum700);
+    doc.text(c.label, marginX, y); y += 16;
+    ITEMS_PEER[c.key].forEach((text,i)=>{
+      const lines = doc.splitTextToSize(text, contentW);
+      ensureSpace(lines.length*10 + 34);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...plum900);
+      lines.forEach((l,li)=> doc.text(l, marginX, y+li*10));
+      y += lines.length*10 + 4;
+
+      const pVal = avg(personalPeers.map(r=>r.scores[c.key][i]));
+      const fVal = avg(professionalPeers.map(r=>r.scores[c.key][i]));
+      const barMaxW = contentW - 130;
+      [['Personal', pVal, vPersonal], ['Profesional', fVal, vProfessional]].forEach(([lbl,val,col])=>{
+        ensureSpace(12);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...grey);
+        doc.text(lbl, marginX, y+6);
+        doc.setFillColor(...grey200); doc.rect(marginX+62, y, barMaxW, 6, 'F');
+        if(val != null){
+          doc.setFillColor(...col);
+          doc.rect(marginX+62, y, Math.max(2,barMaxW*(val/5)), 6, 'F');
+        }
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...plum900);
+        doc.text(val!=null ? val.toFixed(1) : '—', marginX+62+barMaxW+6, y+6);
+        y += 12;
+      });
+      y += 6;
+    });
+    y += 6;
+  });
+
+  /* ================= 6. Fortalezas y oportunidades de mejora ================= */
+  sectionTitle(6, 'Fortalezas y oportunidades de mejora');
+  label('Fortalezas · Autoevaluación');
+  paragraph(own ? own.strengths : 'Aún no completa su autoevaluación.', 9.5);
+  label('Fortalezas · Entorno personal');
+  if(personalPeers.length){ personalPeers.forEach(r=> paragraph(r.strengths, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+  label('Fortalezas · Entorno profesional');
+  if(professionalPeers.length){ professionalPeers.forEach(r=> paragraph(r.strengths, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+
+  y += 6;
+  label('Oportunidades de mejora · Autoevaluación');
+  paragraph(own ? own.improvements : 'Aún no completa su autoevaluación.', 9.5);
+  label('Oportunidades de mejora · Entorno personal');
+  if(personalPeers.length){ personalPeers.forEach(r=> paragraph(r.improvements, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+  label('Oportunidades de mejora · Entorno profesional');
+  if(professionalPeers.length){ professionalPeers.forEach(r=> paragraph(r.improvements, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+
+  /* ================= 7. Contribución potencial al programa ================= */
+  sectionTitle(7, 'Contribución potencial al programa');
+  paragraph('Respuestas a: "¿Cómo describirías tu contribución (o la de la participante) en el aprendizaje y desarrollo de quienes te/la rodean?"', 9.5);
+  label('Autoevaluación');
+  paragraph(own ? own.contribution : 'Aún no completa su autoevaluación.', 9.5);
+  label('Entorno personal');
+  if(personalPeers.length){ personalPeers.forEach(r=> paragraph(r.contribution, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+  label('Entorno profesional');
+  if(professionalPeers.length){ professionalPeers.forEach(r=> paragraph(r.contribution, 9.5)); }
+  else paragraph('Sin respuestas registradas todavía.', 9.5);
+
+  /* ================= 8. Notas finales ================= */
+  sectionTitle(8, 'Notas finales');
+  const boxLines1 = doc.splitTextToSize('Este informe es un punto de partida, no una conclusión. Te invitamos a revisarlo con apertura, identificar 2 o 3 focos de desarrollo prioritarios, y construir junto con tu mentora o el equipo de ESPAE un plan de desarrollo personal y profesional concreto para los próximos meses.', contentW-40);
+  const boxLines2 = doc.splitTextToSize('Recuerda que la percepción de otras personas es un dato valioso, no una verdad absoluta — combínala con tu propio criterio y contexto.', contentW-40);
+  const boxH = 34 + (boxLines1.length+boxLines2.length)*12 + 16;
+  ensureSpace(boxH+10);
+  doc.setFillColor(...plum900);
+  doc.roundedRect(marginX, y, contentW, boxH, 8, 8, 'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+  doc.text('De la información al plan de acción', marginX+20, y+24);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5);
+  let by = y+42;
+  boxLines1.forEach(l=>{ doc.text(l, marginX+20, by); by += 12; });
+  by += 6;
+  boxLines2.forEach(l=>{ doc.text(l, marginX+20, by); by += 12; });
+  y += boxH + 16;
+
+  smallMuted('Este informe es confidencial. Las respuestas individuales de tus evaluadores de pares se presentan de forma agregada y agrupada por entorno (personal/profesional) para proteger su identidad y favorecer una retroalimentación honesta.');
+
+  /* ---- Slogan + footer ---- */
+  ensureSpace(70);
+  y += 16;
+  doc.setFont('times','bolditalic'); doc.setFontSize(18); doc.setTextColor(...plum700);
+  doc.text('Inspira, Lidera y Transforma', pageW/2, y, {align:'center'});
+  y += 26;
+  doc.setDrawColor(...grey200); doc.line(marginX, y, pageW-marginX, y);
+  y += 16;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...plum500);
+  doc.text('SHELEADS360 · WOMEN CROSS MENTORING — V1.0', pageW/2, y, {align:'center'});
+  y += 12;
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...grey);
+  doc.text('© 2026 ESPAE, Escuela de Negocios de la ESPOL. Todos los derechos reservados.', pageW/2, y, {align:'center'});
+
+  const filename = `informe_360_${p.name.replace(/\s+/g,'_')}.pdf`;
+  const blobUrl = doc.output('bloburl');
+
+  const fallback = document.getElementById('pdf-fallback-link');
+  fallback.href = blobUrl;
+  fallback.download = filename;
+  fallback.textContent = `⇩ Descargar informe de ${p.name}`;
+  fallback.style.display = 'inline-block';
+
+  if(popup && !popup.closed){
+    popup.location.href = blobUrl;
+    showToast('Informe PDF abierto en una pestaña nueva.');
+  }else{
+    showToast('Usa el botón "Abrir informe PDF" para descargarlo.');
+  }
+}
+
+/* ---------------- HTML report (viewable / printable) ---------------- */
+function escHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function buildReportHtml(p, own, personalPeers, professionalPeers){
+  const selfScores = own ? own.scores : {};
+  const personalScoresList = personalPeers.map(r=>r.scores);
+  const professionalScoresList = professionalPeers.map(r=>r.scores);
+
+  function avgArr(arr){ const v=arr.filter(x=>x!=null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
+  function compAvg(scores,key){ return scores && scores[key] ? avgArr(scores[key]) : null; }
+  function groupCompAvg(list,key){ return avgArr(list.flatMap(s=> s && s[key] ? s[key] : [])); }
+
+  const selfAvgs={}, personalAvgs={}, professionalAvgs={}, generalAvgs={};
+  COMPETENCIES.forEach(c=>{
+    selfAvgs[c.key] = compAvg(selfScores, c.key);
+    personalAvgs[c.key] = groupCompAvg(personalScoresList, c.key);
+    professionalAvgs[c.key] = groupCompAvg(professionalScoresList, c.key);
+    const allVals = [...(selfScores[c.key]||[]), ...personalScoresList.flatMap(s=>s[c.key]||[]), ...professionalScoresList.flatMap(s=>s[c.key]||[])];
+    generalAvgs[c.key] = avgArr(allVals);
+  });
+
+  function buildRadarSvg(){
+    const size=340, cx=size/2, cy=size/2, R=118, n=COMPETENCIES.length;
+    function pt(ratio,i){ const angle=(-90+(360/n)*i)*Math.PI/180; return [cx+R*ratio*Math.cos(angle), cy+R*ratio*Math.sin(angle)]; }
+    let svg = `<svg width="${size}" height="${size+40}" viewBox="0 0 ${size} ${size+40}">`;
+    for(let level=1; level<=5; level++){
+      const ratio=level/5;
+      const pts = COMPETENCIES.map((c,i)=>pt(ratio,i).join(',')).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="#e4dfe8" stroke-width="1"/>`;
+    }
+    COMPETENCIES.forEach((c,i)=>{
+      const [x,yv]=pt(1,i);
+      svg += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${yv}" stroke="#e4dfe8" stroke-width="1"/>`;
+      const [lx,ly]=pt(1.32,i);
+      const angle=(-90+(360/n)*i);
+      let anchor='middle';
+      if(Math.cos(angle*Math.PI/180)>0.35) anchor='start';
+      else if(Math.cos(angle*Math.PI/180)<-0.35) anchor='end';
+      svg += `<text x="${lx}" y="${ly}" font-size="9.5" fill="#2f2c35" text-anchor="${anchor}" font-family="Inter, sans-serif" font-weight="600">${i+1}</text>`;
+    });
+    function series(valsObj,color,opacity){
+      const pts = COMPETENCIES.map((c,i)=>pt((valsObj[c.key]||0)/5,i).join(',')).join(' ');
+      let s=`<polygon points="${pts}" fill="${color}" fill-opacity="${opacity}" stroke="${color}" stroke-width="2"/>`;
+      COMPETENCIES.forEach((c,i)=>{
+        const [x,yv]=pt((valsObj[c.key]||0)/5,i);
+        s+=`<circle cx="${x}" cy="${yv}" r="2.6" fill="${color}"/>`;
+      });
+      return s;
+    }
+    svg += series(professionalAvgs,'#f04f53',0.14);
+    svg += series(personalAvgs,'#34c2a4',0.14);
+    svg += series(selfAvgs,'#594eff',0.16);
+    svg += `</svg>`;
+    const keyLine = COMPETENCIES.map((c,i)=>`<b>${i+1}</b> ${c.label}`).join(' &nbsp;·&nbsp; ');
+    return `${svg}<div style="font-size:10.5px;color:#6d6577;margin-top:6px;line-height:1.6;max-width:340px;">${keyLine}</div>`;
+  }
+
+  function buildCompTableRows(){
+    let html='';
+    COMPETENCIES.forEach(c=>{
+      html += `<tr>
+        <td>${c.label}</td>
+        <td class="num">${selfAvgs[c.key]!=null?selfAvgs[c.key].toFixed(2):'—'}</td>
+        <td class="num">${personalAvgs[c.key]!=null?personalAvgs[c.key].toFixed(2):'—'}</td>
+        <td class="num">${professionalAvgs[c.key]!=null?professionalAvgs[c.key].toFixed(2):'—'}</td>
+        <td class="num">${generalAvgs[c.key]!=null?generalAvgs[c.key].toFixed(2):'—'}</td>
+      </tr>`;
+    });
+    const fmt=v=> v!=null ? v.toFixed(2) : '—';
+    html += `<tr class="general-row">
+      <td>Promedio general del perfil</td>
+      <td class="num">${fmt(avgArr(COMPETENCIES.map(c=>selfAvgs[c.key])))}</td>
+      <td class="num">${fmt(avgArr(COMPETENCIES.map(c=>personalAvgs[c.key])))}</td>
+      <td class="num">${fmt(avgArr(COMPETENCIES.map(c=>professionalAvgs[c.key])))}</td>
+      <td class="num">${fmt(avgArr(COMPETENCIES.map(c=>generalAvgs[c.key])))}</td>
+    </tr>`;
+    return html;
+  }
+
+  function buildRankingHtml(){
+    const items=[];
+    COMPETENCIES.forEach(c=>{
+      ITEMS_PEER[c.key].forEach((text,i)=>{
+        const vals=[...personalScoresList.map(s=>s[c.key]?s[c.key][i]:null), ...professionalScoresList.map(s=>s[c.key]?s[c.key][i]:null)];
+        const pooled = avgArr(vals);
+        if(pooled!=null) items.push({text, competency:c.label, score:pooled});
+      });
+    });
+    const sortedDesc=[...items].sort((a,b)=>b.score-a.score);
+    const top10=sortedDesc.slice(0,10);
+    const bottom10=[...items].sort((a,b)=>a.score-b.score).slice(0,10);
+    function renderList(list,cls){
+      if(list.length===0) return `<p class="muted">Aún no hay suficientes evaluaciones de pares para calcular este ranking.</p>`;
+      return list.map((it,i)=>`
+        <div class="rank-card ${cls}">
+          <div class="rank-badge">${i+1}</div>
+          <div class="rank-text">
+            <div class="rank-item">${escHtml(it.text)}</div>
+            <div class="rank-tag">${escHtml(it.competency)}</div>
+          </div>
+          <div class="rank-score">${it.score.toFixed(1)}</div>
+        </div>`).join('');
+    }
+    return { top: renderList(top10,'top'), bottom: renderList(bottom10,'bottom') };
+  }
+
+  function buildBarChartsHtml(){
+    let html='';
+    COMPETENCIES.forEach(c=>{
+      html += `<div class="bar-competency"><h3>${c.label}</h3>`;
+      ITEMS_PEER[c.key].forEach((text,i)=>{
+        const pv = avgArr(personalScoresList.map(s=>s[c.key]?s[c.key][i]:null));
+        const fv = avgArr(professionalScoresList.map(s=>s[c.key]?s[c.key][i]:null));
+        html += `<div class="bar-item">
+          <div class="bar-item-label">${escHtml(text)}</div>
+          <div class="bar-pair">
+            <div class="bar-track">
+              <span class="src">Personal</span>
+              <div class="bar-fill-track"><div class="bar-fill" style="width:${pv!=null?(pv/5*100).toFixed(0):0}%;background:#34c2a4;"></div></div>
+              <span class="bar-val">${pv!=null?pv.toFixed(1):'—'}</span>
+            </div>
+            <div class="bar-track">
+              <span class="src">Profesional</span>
+              <div class="bar-fill-track"><div class="bar-fill" style="width:${fv!=null?(fv/5*100).toFixed(0):0}%;background:#f04f53;"></div></div>
+              <span class="bar-val">${fv!=null?fv.toFixed(1):'—'}</span>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    return html;
+  }
+
+  function buildCommentGroupHtml(selfText, personalList, professionalList){
+    let html = `<div class="comment-item self"><div class="comment-src">Autoevaluación</div>${selfText ? escHtml(selfText) : 'Aún no completa su autoevaluación.'}</div>`;
+    html += `<div class="comment-subhead">Entorno personal (${personalList.length})</div>`;
+    if(personalList.length===0) html += `<p class="muted">Sin respuestas registradas todavía.</p>`;
+    personalList.forEach((t)=>{ html += `<div class="comment-item">${escHtml(t)}</div>`; });
+    html += `<div class="comment-subhead">Entorno profesional (${professionalList.length})</div>`;
+    if(professionalList.length===0) html += `<p class="muted">Sin respuestas registradas todavía.</p>`;
+    professionalList.forEach((t)=>{ html += `<div class="comment-item">${escHtml(t)}</div>`; });
+    return html;
+  }
+
+  const radarHtml = buildRadarSvg();
+  const compTableRows = buildCompTableRows();
+  const ranking = buildRankingHtml();
+  const barChartsHtml = buildBarChartsHtml();
+  const strengthsHtml = buildCommentGroupHtml(own?own.strengths:null, personalPeers.map(r=>r.strengths), professionalPeers.map(r=>r.strengths));
+  const improvementsHtml = buildCommentGroupHtml(own?own.improvements:null, personalPeers.map(r=>r.improvements), professionalPeers.map(r=>r.improvements));
+  const contributionHtml = buildCommentGroupHtml(own?own.contribution:null, personalPeers.map(r=>r.contribution), professionalPeers.map(r=>r.contribution));
+
+  const totalEvals = (own?1:0) + personalPeers.length + professionalPeers.length;
+  const dateStr = new Date().toLocaleDateString('es-EC',{year:'numeric',month:'long',day:'numeric'});
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe individual · ${escHtml(p.name)} · SheLeads360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum-900:#2f2c35; --plum-700:#572975; --plum-500:#815c97; --plum-300:#ab90b9;
+    --lilac-100:#d5c6dc; --grey-200:#d0ccd5; --white:#ffffff;
+    --radius:14px; --shadow:0 12px 32px -18px rgba(47,44,53,.35);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;color:var(--plum-900);background:var(--white);line-height:1.55;}
+  .doc{max-width:880px;margin:0 auto;padding:0 24px 100px;}
+  .print-banner{background:var(--plum-900);color:var(--white);text-align:center;font-size:13px;padding:10px 16px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;}
+  .print-banner button{background:var(--white);color:var(--plum-900);border:none;border-radius:8px;padding:6px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}
+  .cover{background:linear-gradient(135deg,var(--plum-700),var(--plum-500));color:var(--white);padding:48px 40px;border-radius:0 0 22px 22px;margin-bottom:44px;}
+  .cover .eyebrow{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;font-weight:600;}
+  .cover h1{font-family:'Fraunces',serif;font-weight:500;font-size:36px;margin:8px 0 6px;}
+  .cover .sub{font-size:14px;opacity:.92;max-width:60ch;margin:0 0 4px;}
+  .cover .sub-inst{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;font-weight:600;margin:0 0 18px;}
+  .cover .meta{display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;opacity:.9;border-top:1px solid rgba(255,255,255,.25);padding-top:14px;}
+  .cover .meta b{display:block;font-weight:700;font-size:13px;}
+  section{margin-bottom:52px;}
+  .section-num{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--plum-700);color:var(--white);font-family:'Fraunces',serif;font-weight:600;font-size:14px;margin-right:10px;flex-shrink:0;}
+  .section-head{display:flex;align-items:center;margin-bottom:18px;}
+  .section-head h2{font-family:'Fraunces',serif;font-weight:500;font-size:24px;margin:0;color:var(--plum-900);}
+  .section-body{padding-left:40px;}
+  .card{border:1px solid var(--grey-200);border-radius:var(--radius);padding:24px 26px;background:var(--white);}
+  .muted{color:#6d6577;font-size:14px;}
+  .intro-text{font-size:15px;color:var(--plum-900);margin-bottom:20px;}
+  .purpose-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:640px){.purpose-grid{grid-template-columns:1fr;}}
+  .purpose-card{background:var(--lilac-100);border-radius:12px;padding:16px 18px;}
+  .purpose-card .n{font-family:'Fraunces',serif;font-weight:600;font-size:20px;color:var(--plum-700);}
+  .purpose-card p{margin:6px 0 0;font-size:13.5px;color:var(--plum-900);}
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
+  .stat-card{border:1px solid var(--grey-200);border-radius:12px;padding:18px;text-align:center;}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--plum-700);}
+  .stat-card .lbl{font-size:12px;color:#6d6577;margin-top:4px;}
+  .env-strip{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .env-pill{flex:1;min-width:160px;border-radius:10px;padding:12px 16px;color:var(--white);}
+  .env-pill .t{font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.85;}
+  .env-pill .v{font-family:'Fraunces',serif;font-size:22px;font-weight:600;}
+  .env-pill .d{font-size:11.5px;opacity:.9;margin-top:2px;}
+  .radar-row{display:flex;gap:32px;flex-wrap:wrap;align-items:center;margin-bottom:24px;}
+  .radar-legend{display:flex;flex-direction:column;gap:10px;}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .legend-swatch{width:14px;height:14px;border-radius:4px;flex-shrink:0;}
+  table.comp-table{width:100%;border-collapse:collapse;font-size:13px;}
+  table.comp-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--plum-500);padding:9px 10px;border-bottom:2px solid var(--grey-200);}
+  table.comp-table td{padding:10px 10px;border-bottom:1px solid var(--grey-200);}
+  table.comp-table td.num{font-weight:700;text-align:center;}
+  table.comp-table tr:last-child td{border-bottom:none;}
+  table.comp-table tr.general-row td{background:var(--lilac-100);font-weight:700;}
+  .rank-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:700px){.rank-cols{grid-template-columns:1fr;}}
+  .rank-col-title{font-size:13px;font-weight:700;color:var(--plum-700);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .rank-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:11px;margin-bottom:8px;border:1px solid var(--grey-200);}
+  .rank-card.top{background:linear-gradient(90deg,#faf7fb,var(--white));}
+  .rank-card.bottom{background:linear-gradient(90deg,#fbf6f8,var(--white));}
+  .rank-badge{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;font-size:12.5px;color:var(--white);}
+  .rank-card.top .rank-badge{background:var(--plum-700);}
+  .rank-card.bottom .rank-badge{background:var(--plum-300);}
+  .rank-text{flex:1;}
+  .rank-item{font-size:12.5px;color:var(--plum-900);line-height:1.35;}
+  .rank-tag{font-size:10px;color:var(--plum-500);text-transform:uppercase;letter-spacing:.04em;font-weight:700;margin-top:3px;}
+  .rank-score{font-family:'Fraunces',serif;font-weight:600;font-size:16px;color:var(--plum-900);flex-shrink:0;}
+  .bar-competency{margin-bottom:26px;}
+  .bar-competency h3{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:var(--plum-700);margin:0 0 12px;}
+  .bar-item{margin-bottom:10px;}
+  .bar-item-label{font-size:12px;color:var(--plum-900);margin-bottom:5px;}
+  .bar-pair{display:flex;flex-direction:column;gap:3px;}
+  .bar-track{display:flex;align-items:center;gap:8px;}
+  .bar-track .src{font-size:10px;width:76px;flex-shrink:0;color:#6d6577;text-transform:uppercase;letter-spacing:.03em;}
+  .bar-fill-track{flex:1;height:8px;background:var(--grey-200);border-radius:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:5px;}
+  .bar-val{font-size:11px;font-weight:700;width:22px;text-align:right;flex-shrink:0;}
+  .comment-subhead{font-size:13.5px;font-weight:700;color:var(--plum-700);margin:22px 0 10px;text-transform:uppercase;letter-spacing:.03em;}
+  .comment-subhead:first-child{margin-top:0;}
+  .comment-item{border-left:3px solid var(--plum-300);padding:10px 14px;margin-bottom:8px;background:#faf9fb;border-radius:0 8px 8px 0;font-size:13.5px;}
+  .comment-item .comment-src{font-size:10.5px;color:var(--plum-500);font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;}
+  .comment-item.self{border-left-color:var(--plum-700);background:var(--lilac-100);}
+  .closing-card{background:linear-gradient(135deg,var(--plum-900),#463a52);color:var(--white);border-radius:var(--radius);padding:26px 28px;}
+  .closing-card h3{font-family:'Fraunces',serif;font-weight:500;font-size:19px;margin:0 0 10px;}
+  .closing-card p{font-size:13.5px;opacity:.92;margin:0 0 10px;}
+  .confidentiality{font-size:12px;color:#8a8391;margin-top:26px;padding-top:16px;border-top:1px solid var(--grey-200);}
+  footer.doc-footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--grey-200);text-align:center;}
+  .doc-footer .v{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--plum-500);}
+  .doc-footer .c{font-size:11px;color:#8a8391;margin-top:4px;}
+  .slogan{font-family:'Fraunces',serif;font-weight:500;font-size:26px;text-align:center;color:var(--plum-700);margin:56px 0 0;letter-spacing:-.005em;}
+  @media print{ .print-banner{display:none;} .cover{border-radius:0;} section{page-break-inside:avoid;} }
+</style>
+</head>
+<body>
+<div class="print-banner">
+  <span>Informe individual de Evaluación 360° — ${escHtml(p.name)}</span>
+  <button onclick="window.print()">Imprimir / Guardar como PDF</button>
+</div>
+<div class="doc">
+  <div class="cover">
+    <div class="eyebrow">Informe individual · Evaluación 360°</div>
+    <h1>${escHtml(p.name)}</h1>
+    <p class="sub">SheLeads360 · Women Cross Mentoring — Diplomado Internacional Desarrollo de Habilidades para Mujeres Directivas (Cuarta edición)</p>
+    <p class="sub-inst">ESPAE, ESCUELA DE NEGOCIOS DE LA ESPOL</p>
+    <div class="meta">
+      <div><b>${dateStr}</b>Fecha de generación</div>
+      <div><b>${totalEvals} evaluación${totalEvals===1?'':'es'}</b>Consideradas en este informe</div>
+      <div><b>Confidencial</b>Uso personal y del equipo de ESPAE</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="section-head"><span class="section-num">1</span><h2>Presentación</h2></div>
+    <div class="section-body">
+      <p class="intro-text">Este informe recoge los resultados de tu Evaluación 360°, desarrollada a través de la app SheLeads360, como parte de Women Cross Mentoring, una actividad en el marco del Diplomado Internacional de Desarrollo de Habilidades para Mujeres Directivas de ESPAE. Fue diseñado para ofrecerte un análisis detallado de la información recopilada por el equipo de ESPAE a partir de tu autoevaluación y de las personas de tu entorno personal y profesional que te evaluaron.</p>
+      <p class="intro-text">A continuación encontrarás un resumen de las puntuaciones reportadas, así como el detalle de las fortalezas, oportunidades de mejora y contribución al programa identificadas en este proceso. Esta información es un insumo valioso para la construcción de tu plan de desarrollo personal y profesional.</p>
+      <p class="intro-text" style="margin-bottom:14px;"><b>Propósitos de este informe:</b></p>
+      <div class="purpose-grid">
+        <div class="purpose-card"><div class="n">01</div><p>Desarrollar consciencia de cómo otras personas perciben tu comportamiento en el entorno profesional.</p></div>
+        <div class="purpose-card"><div class="n">02</div><p>Identificar los cambios que necesitas implementar y desarrollar.</p></div>
+        <div class="purpose-card"><div class="n">03</div><p>Explorar e identificar las razones que motivaron las puntuaciones que has recibido.</p></div>
+        <div class="purpose-card"><div class="n">04</div><p>Brindarte la oportunidad de responsabilizarte por tu propio desarrollo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">2</span><h2>Recuento de las evaluaciones recibidas</h2></div>
+    <div class="section-body">
+      <p class="muted" style="margin-top:0;">Este informe se elaboró considerando las siguientes evaluaciones:</p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num">${own?1:0}</div><div class="lbl">Autoevaluación</div></div>
+        <div class="stat-card"><div class="num">${personalPeers.length+professionalPeers.length}</div><div class="lbl">Evaluaciones de pares</div></div>
+        <div class="stat-card"><div class="num">${personalPeers.length}</div><div class="lbl">Entorno personal</div></div>
+        <div class="stat-card"><div class="num">${professionalPeers.length}</div><div class="lbl">Entorno profesional</div></div>
+      </div>
+      <div class="env-strip">
+        <div class="env-pill" style="background:var(--plum-700);">
+          <div class="t">Entorno personal</div><div class="v">${personalPeers.length} evaluador${personalPeers.length===1?'':'es'}</div>
+        </div>
+        <div class="env-pill" style="background:var(--plum-500);">
+          <div class="t">Entorno profesional</div><div class="v">${professionalPeers.length} evaluador${professionalPeers.length===1?'':'es'}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">3</span><h2>Evaluación de competencias</h2></div>
+    <div class="section-body">
+      <p class="muted" style="margin-top:0;">El gráfico radial compara, para cada una de las 7 competencias evaluadas, tu autopercepción con la percepción de tu entorno personal y de tu entorno profesional. Cuanto más se acerca una línea al borde exterior, más alta es la puntuación (escala 1 a 5). Las diferencias entre líneas señalan dónde tu autopercepción coincide —o no— con la mirada de los demás.</p>
+      <div class="radar-row">
+        <div>${radarHtml}</div>
+        <div class="radar-legend">
+          <div class="legend-item"><span class="legend-swatch" style="background:#594eff;"></span>Autoevaluación</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#34c2a4;"></span>Entorno personal</div>
+          <div class="legend-item"><span class="legend-swatch" style="background:#f04f53;"></span>Entorno profesional</div>
+        </div>
+      </div>
+      <p class="muted">La siguiente tabla presenta el promedio simple de cada competencia (calculado a partir del promedio de sus 3 ítems) para cada fuente, además del promedio general, que agrega todas las evaluaciones recibidas.</p>
+      <div class="card" style="padding:16px 18px;overflow-x:auto;">
+        <table class="comp-table">
+          <thead><tr><th>Competencia</th><th style="text-align:center;">Autoevaluación</th><th style="text-align:center;">Entorno personal</th><th style="text-align:center;">Entorno profesional</th><th style="text-align:center;">Promedio general</th></tr></thead>
+          <tbody>${compTableRows}</tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">4</span><h2>Ranking de comportamientos</h2></div>
+    <div class="section-body">
+      <p class="muted" style="margin-top:0;">Este ranking ordena los comportamientos evaluados según el promedio combinado de todas las evaluaciones de pares (entorno personal + profesional), de mayor a menor puntuación.</p>
+      <div class="rank-cols">
+        <div>
+          <div class="rank-col-title">🏆 Top 10 · Comportamientos mejor evaluados</div>
+          ${ranking.top}
+        </div>
+        <div>
+          <div class="rank-col-title">🎯 Top 10 · Mayores oportunidades de mejora</div>
+          ${ranking.bottom}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">5</span><h2>Análisis detallado de comportamientos</h2></div>
+    <div class="section-body">
+      <p class="muted" style="margin-top:0;">Detalle ítem por ítem, agrupado por competencia, comparando el promedio de tu entorno personal frente al de tu entorno profesional.</p>
+      ${barChartsHtml}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">6</span><h2>Fortalezas y oportunidades de mejora</h2></div>
+    <div class="section-body">
+      <h3 style="font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--plum-900);margin:0 0 4px;">Fortalezas</h3>
+      ${strengthsHtml}
+      <h3 style="font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--plum-900);margin:28px 0 4px;">Oportunidades de mejora</h3>
+      ${improvementsHtml}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">7</span><h2>Contribución potencial al programa</h2></div>
+    <div class="section-body">
+      <p class="muted" style="margin-top:0;">Respuestas a: "¿Cómo describirías tu contribución (o la de la participante) en el aprendizaje y desarrollo de quienes te/la rodean?"</p>
+      ${contributionHtml}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num">8</span><h2>Notas finales</h2></div>
+    <div class="section-body">
+      <div class="closing-card">
+        <h3>De la información al plan de acción</h3>
+        <p>Este informe es un punto de partida, no una conclusión. Te invitamos a revisarlo con apertura, identificar 2 o 3 focos de desarrollo prioritarios, y construir junto con tu mentora o el equipo de ESPAE un plan de desarrollo personal y profesional concreto para los próximos meses.</p>
+        <p>Recuerda que la percepción de otras personas es un dato valioso, no una verdad absoluta — combínala con tu propio criterio y contexto.</p>
+      </div>
+      <p class="confidentiality">Este informe es confidencial. Las respuestas individuales de tus evaluadores de pares se presentan de forma agregada y agrupada por entorno (personal/profesional) para proteger su identidad y favorecer una retroalimentación honesta.</p>
+    </div>
+  </section>
+
+  <p class="slogan">Inspira, Lidera y Transforma</p>
+
+  <footer class="doc-footer">
+    <div class="v">SheLeads360 · Women Cross Mentoring — v1.0</div>
+    <div class="c">© 2026 ESPAE, Escuela de Negocios de la ESPOL. Todos los derechos reservados.</div>
+  </footer>
+</div>
+</body>
+</html>`;
+}
+
+async function generateHtmlReport(pidOverride){
+  const pid = pidOverride || document.getElementById('report-participant').value;
+  if(!pid){ showToast('Selecciona una participante.'); return; }
+
+  const popup = window.open('', '_blank');
+
+  await loadData();
+  const p = participants.find(x=>x.id===pid);
+  if(!p){ showToast('Selecciona una participante.'); if(popup) popup.close(); return; }
+  const own = responses.find(r=>r.participantId===pid && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===pid && r.type==='peer');
+  const personalPeers = peers.filter(r=>r.relType==='Personal');
+  const professionalPeers = peers.filter(r=>r.relType==='Profesional');
+
+  const html = buildReportHtml(p, own, personalPeers, professionalPeers);
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+
+  const fallback = document.getElementById('html-report-fallback-link');
+  fallback.href = url;
+  fallback.download = `informe_360_${p.name.replace(/\s+/g,'_')}.html`;
+  fallback.textContent = `Abrir informe HTML de ${p.name}`;
+
+  if(popup && !popup.closed){
+    popup.location.href = url;
+    fallback.style.display = 'none';
+    showToast('Informe abierto en una pestaña nueva.');
+  }else{
+    fallback.style.display = 'inline-block';
+    showToast('Usa el botón "Abrir informe HTML" para verlo.');
+  }
+}
+
+async function downloadHtmlReport(pidOverride){
+  const pid = pidOverride || document.getElementById('report-participant').value;
+  if(!pid){ showToast('Selecciona una participante.'); return; }
+
+  await loadData();
+  const p = participants.find(x=>x.id===pid);
+  if(!p){ showToast('Selecciona una participante.'); return; }
+  const own = responses.find(r=>r.participantId===pid && r.type==='self');
+  const peers = responses.filter(r=>r.participantId===pid && r.type==='peer');
+  const personalPeers = peers.filter(r=>r.relType==='Personal');
+  const professionalPeers = peers.filter(r=>r.relType==='Profesional');
+
+  const html = buildReportHtml(p, own, personalPeers, professionalPeers);
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `informe_360_${p.name.replace(/\s+/g,'_')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+
+  showToast('Descargando informe HTML…');
+}
+
+/* ---------------- Init ---------------- */
+loadData();
+</script>
+</body>
+</html>
